@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { Children, type ReactNode } from 'react';
 import { Box } from '@mui/material';
 import Masonry from '@mui/lab/Masonry';
 
@@ -19,10 +19,13 @@ export const MasonryGrid = ({
   columns = { xs: 1, sm: 2, md: 3, lg: 4 },
   spacing = 2,
 }: MasonryGridProps) => {
+  // Filter out null/undefined children (Masonry requires non-null children)
+  const validChildren = Children.toArray(children);
+
   return (
     <Box sx={{ width: '100%' }}>
       <Masonry columns={columns} spacing={spacing}>
-        {children}
+        {validChildren}
       </Masonry>
     </Box>
   );
