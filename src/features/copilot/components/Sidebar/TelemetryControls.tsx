@@ -40,7 +40,7 @@ export const TelemetryControls = () => {
 
         return (
           <Box key={category} sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.disabled" sx={{ pl: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
               {TELEMETRY_CATEGORY_LABELS[category]}
             </Typography>
             <FormGroup>
