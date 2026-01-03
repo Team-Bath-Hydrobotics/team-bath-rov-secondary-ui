@@ -23,4 +23,4 @@ export type {
 } from './telemetry.types';
 
 // CoPilot page types
-export type { CoPilotState, CoPilotContextValue, CoPilotAction } from './copilot.types';
+export type { AppState, AppStateContextValue, AppStateAction } from './AppState';

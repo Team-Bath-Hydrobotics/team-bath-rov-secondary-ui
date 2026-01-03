@@ -1,19 +1,19 @@
 import { Box, Typography, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
-import { useCoPilot } from '../../context';
+import { useAppStateContext } from '../../context';
 import {
   TELEMETRY_FIELDS,
   MAX_TELEMETRY_SELECTIONS,
   TELEMETRY_CATEGORY_LABELS,
-} from '../../constants';
-import type { TelemetryCategory } from '../../../../types';
+} from '../../types/constants/telemetryFields';
+import type { TelemetryCategory } from '../../types';
 
 /**
  * Telemetry selection controls for the sidebar.
  * Displays checkboxes grouped by category with max 3 selection limit.
  */
-export const TelemetryControls = () => {
-  const { state, toggleTelemetry, canSelectMoreTelemetry } = useCoPilot();
+export const TelemetryToggle = () => {
+  const { state, toggleTelemetry, canSelectMoreTelemetry } = useAppStateContext();
   const { selectedTelemetry } = state;
 
   const categories: TelemetryCategory[] = [

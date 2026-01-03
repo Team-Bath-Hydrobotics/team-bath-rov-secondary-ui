@@ -1,4 +1,4 @@
-import type { CameraConfig } from '../../../types';
+import type { CameraConfig } from '../camera.types';
 
 /**
  * Default camera configurations for the ROV.

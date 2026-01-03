@@ -2,18 +2,19 @@ import { useCallback } from 'react';
 import { Box } from '@mui/material';
 import { useSidebarContent } from '../../hooks/useSidebarContent';
 import { MainContentLayout } from '../../layouts/MainContentLayout';
-import { CoPilotProvider, useCoPilot } from '../../features/copilot';
-import { CameraControls, TelemetryControls } from '../../features/copilot/components/Sidebar';
-import { MasonryGrid } from '../../features/copilot/components/MasonryGrid';
-import { CameraTile } from '../../features/copilot/components/CameraTile';
-import { TelemetryTile } from '../../features/copilot/components/TelemetryTile';
-import { TELEMETRY_FIELDS } from '../../features/copilot/constants';
+import { CameraToggle } from '../../components/CameraToggle';
+import { TelemetryToggle } from '../../components/TelemetryToggle';
+import { MasonryGrid } from '../../components/MasonryGrid';
+import { CameraTile } from '../../components/CameraTile';
+import { TelemetryTile } from '../../components/TelemetryTile/TelemetryTile';
+import { TELEMETRY_FIELDS } from '../../types/constants/telemetryFields';
+import { useAppStateContext } from '../../context';
 
 /**
  * Main content with inline controls panel and masonry grid.
  */
 const CoPilotContent = () => {
-  const { state, cameraConfigs } = useCoPilot();
+  const { state, cameraConfigs } = useAppStateContext();
   const { selectedTelemetry } = state;
 
   const selectedTelemetryFields = TELEMETRY_FIELDS.filter((f) => selectedTelemetry.includes(f.id));
@@ -30,11 +31,7 @@ const CoPilotContent = () => {
           overflowY: 'auto',
           p: 2,
         }}
-      >
-        <CameraControls />
-        <Box sx={{ my: 2 }} />
-        <TelemetryControls />
-      </Box>
+      ></Box>
 
       {/* Masonry grid */}
       <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto' }}>
@@ -67,19 +64,27 @@ const CoPilotContent = () => {
   );
 };
 
+const CoPilotSidebarNav = () => {
+  return (
+    <>
+      {' '}
+      <CameraToggle />
+      <TelemetryToggle />
+    </>
+  );
+};
+
 /**
  * CoPilot page - camera grid with telemetry displays.
  */
 export const CoPilot = () => {
   // Empty sidebar - controls are in the main content area
-  const sidebarFactory = useCallback(() => null, []);
+  const sidebarFactory = useCallback(() => <CoPilotSidebarNav />, []);
   useSidebarContent(sidebarFactory);
 
   return (
-    <CoPilotProvider>
-      <MainContentLayout name="Co-Pilot">
-        <CoPilotContent />
-      </MainContentLayout>
-    </CoPilotProvider>
+    <MainContentLayout name="Co-Pilot">
+      <CoPilotContent />
+    </MainContentLayout>
   );
 };

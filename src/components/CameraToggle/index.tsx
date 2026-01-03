@@ -1,13 +1,13 @@
 import { Box, Typography, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import { useCoPilot } from '../../context';
+import { useAppStateContext } from '../../context';
 
 /**
  * Camera toggle controls for the sidebar.
  * Displays a checkbox for each camera to enable/disable it.
  */
-export const CameraControls = () => {
-  const { cameraConfigs, state, toggleCamera } = useCoPilot();
+export const CameraToggle = () => {
+  const { cameraConfigs, state, toggleCamera } = useAppStateContext();
 
   return (
     <Box>

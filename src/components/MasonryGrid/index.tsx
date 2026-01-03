@@ -16,8 +16,8 @@ interface MasonryGridProps {
  */
 export const MasonryGrid = ({
   children,
-  columns = { xs: 1, sm: 2, md: 3, lg: 4 },
-  spacing = 2,
+  columns = { xs: 1, sm: 2, md: 3 },
+  spacing = 1,
 }: MasonryGridProps) => {
   // Filter out null/undefined children (Masonry requires non-null children)
   const validChildren = Children.toArray(children);

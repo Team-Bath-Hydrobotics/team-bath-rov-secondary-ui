@@ -1,7 +1,7 @@
 import { Paper, Box, Typography } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
-import { RecordingStatus } from '../../../../components';
+import { RecordingStatus } from '../RecordingStatus';
 
 interface CameraTileProps {
   cameraId: string;
@@ -20,6 +20,7 @@ export const CameraTile = ({ name, enabled, isRecording }: CameraTileProps) => {
       elevation={2}
       sx={{
         position: 'relative',
+        width: '100%',
         aspectRatio: '16/9',
         overflow: 'hidden',
         // Greyed-out effect when disabled

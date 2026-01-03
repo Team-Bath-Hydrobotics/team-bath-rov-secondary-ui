@@ -1,4 +1,4 @@
-import type { TelemetryFieldMeta } from '../../../types';
+import type { TelemetryFieldMeta } from '../telemetry.types';
 
 /**
  * All available telemetry fields with display metadata.
