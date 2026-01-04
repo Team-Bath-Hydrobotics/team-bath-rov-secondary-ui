@@ -14,6 +14,7 @@ interface CameraTileProps {
  * Camera tile displaying a placeholder for the video feed.
  * Shows greyed-out state when disabled, recording indicator when active.
  */
+
 export const CameraTile = ({ name, enabled, isRecording }: CameraTileProps) => {
   return (
     <Paper
