@@ -15,7 +15,7 @@ export const AppStateProvider = ({
 }: AppStateProviderProps) => {
   const MAX_TELEMETRY_SELECTIONS = 3;
 
-  const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, []);
+  const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
 
   // Lazy init reducer to avoid resetting on re-renders
   const [state, dispatch] = useReducer(AppStateReducer, stableCameraConfigs, (configs) => {
@@ -35,12 +35,12 @@ export const AppStateProvider = ({
   }, [state]);
 
   // Action dispatchers with logging
-  const toggleCamera = useCallback((cameraId: string) => {
+  const toggleCamera = useCallback((cameraId: number) => {
     console.log('[AppStateProvider] Toggling camera:', cameraId);
     dispatch({ type: 'TOGGLE_CAMERA', cameraId });
   }, []);
 
-  const setCameraRecording = useCallback((cameraId: string, isRecording: boolean) => {
+  const setCameraRecording = useCallback((cameraId: number, isRecording: boolean) => {
     console.log(`[AppStateProvider] Set camera recording: ${cameraId} = ${isRecording}`);
     dispatch({ type: 'SET_CAMERA_RECORDING', cameraId, isRecording });
   }, []);

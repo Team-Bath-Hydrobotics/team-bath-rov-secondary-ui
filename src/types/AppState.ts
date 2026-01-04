@@ -27,10 +27,10 @@ export interface AppStateContextValue {
   cameraConfigs: CameraConfig[];
 
   /** Toggle a camera on/off */
-  toggleCamera: (cameraId: string) => void;
+  toggleCamera: (cameraId: number) => void;
 
   /** Set whether a camera is recording */
-  setCameraRecording: (cameraId: string, isRecording: boolean) => void;
+  setCameraRecording: (cameraId: number, isRecording: boolean) => void;
 
   /**
    * Toggle a telemetry field selection.
@@ -55,8 +55,8 @@ export interface AppStateContextValue {
  *   dispatch({ type: 'TOGGLE_CAMERA', cameraId: 'front' })
  */
 export type AppStateAction =
-  | { type: 'TOGGLE_CAMERA'; cameraId: string }
-  | { type: 'SET_CAMERA_RECORDING'; cameraId: string; isRecording: boolean }
+  | { type: 'TOGGLE_CAMERA'; cameraId: number }
+  | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
   | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] };

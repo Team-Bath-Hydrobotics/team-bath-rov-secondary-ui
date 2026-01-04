@@ -4,7 +4,7 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import { RecordingStatus } from '../Status';
 import React from 'react';
 interface CameraTileProps {
-  cameraId: string;
+  cameraId: number;
   name: string;
   enabled: boolean;
   isRecording: boolean;
