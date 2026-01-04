@@ -1,11 +1,6 @@
 import { Box, Typography, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { useAppStateContext } from '../../context';
-import {
-  TELEMETRY_FIELDS,
-  MAX_TELEMETRY_SELECTIONS,
-  TELEMETRY_CATEGORY_LABELS,
-} from '../../types/constants/telemetryFields';
+import { TELEMETRY_FIELDS, TELEMETRY_CATEGORY_LABELS } from '../../types/constants/telemetryFields';
 import type { TelemetryCategory } from '../../types';
 import React from 'react';
 /**
@@ -25,16 +20,7 @@ export const TelemetryToggle = React.memo(() => {
   ];
 
   return (
-    <Box>
-      <Typography
-        variant="subtitle2"
-        color="text.secondary"
-        sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
-      >
-        <ShowChartIcon fontSize="small" />
-        Telemetry ({selectedTelemetry.length}/{MAX_TELEMETRY_SELECTIONS})
-      </Typography>
-
+    <>
       {categories.map((category) => {
         const fieldsInCategory = TELEMETRY_FIELDS.filter((f) => f.category === category);
 
@@ -57,6 +43,12 @@ export const TelemetryToggle = React.memo(() => {
                         onChange={() => toggleTelemetry(field.id)}
                         disabled={isDisabled}
                         size="small"
+                        sx={{
+                          color: isDisabled ? 'green' : 'text.secondary',
+                          '&.Mui-checked': {
+                            color: 'success.main', // Green when checked
+                          },
+                        }}
                       />
                     }
                     label={`${field.label}${field.unit ? ` (${field.unit})` : ''}`}
@@ -73,6 +65,6 @@ export const TelemetryToggle = React.memo(() => {
           </Box>
         );
       })}
-    </Box>
+    </>
   );
 });

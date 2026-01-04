@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { SidebarToggleButton } from '../../components/Toggles';
-import SideBarMenuLayout from '../SideBarMenuLayout.tsx';
+import SideBarMenuLayout from '../SideBarMenuLayout/index.tsx';
 import { VerticalNav } from '../../components/VerticalNav';
 interface SidebarLayoutProps {
   collapsed: boolean;
@@ -28,7 +28,16 @@ export const SidebarLayout = ({
     >
       <SidebarToggleButton collapsed={collapsed} onToggle={onToggle} />
 
-      <Box flexGrow={1} overflow="auto" sx={{ borderRadius: '8px' }}>
+      <Box
+        flexGrow={1}
+        overflow="auto"
+        sx={{
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
         <SideBarMenuLayout>
           <VerticalNav collapsed={collapsed} />
         </SideBarMenuLayout>

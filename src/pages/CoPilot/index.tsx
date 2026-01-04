@@ -6,17 +6,22 @@ import { TelemetryToggle } from '../../components/Toggles';
 import { MasonryGrid } from '../../components/MasonryGrid';
 import { CameraTile } from '../../components/Tiles/CameraTile';
 import { TelemetryTile } from '../../components/Tiles/TelemetryTile';
-import { TELEMETRY_FIELDS } from '../../types/constants/telemetryFields';
+import { MAX_TELEMETRY_SELECTIONS, TELEMETRY_FIELDS } from '../../types/constants/telemetryFields';
 import { useAppStateContext } from '../../context';
 import { Box } from '@mui/material';
 import { useMemo } from 'react';
 import { DEFAULT_CAMERAS } from '../../types/constants';
+import { ToggleLayout } from '../../layouts/ToggleLayout';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import React from 'react';
 /**
  * Main content with inline controls panel and masonry grid.
  */
 const CoPilotContent = () => {
   const { state, cameraConfigs } = useAppStateContext();
   const { selectedTelemetry } = state;
+
   const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
   const selectedTelemetryFields = useMemo(
     () => TELEMETRY_FIELDS.filter((f) => selectedTelemetry.includes(f.id)),
@@ -63,22 +68,34 @@ const CoPilotContent = () => {
   );
 };
 
-const CoPilotSidebarNav = () => {
+interface CoPilotSidebarNavProps {
+  title: string;
+}
+const CoPilotSidebarNav = React.memo(({ title }: CoPilotSidebarNavProps) => {
   return (
     <>
-      {' '}
-      <CameraToggle />
-      <TelemetryToggle />
+      <ToggleLayout title="Cameras" icon={<VideocamIcon fontSize="small" />}>
+        <CameraToggle />
+      </ToggleLayout>
+      <ToggleLayout title={title} icon={<ShowChartIcon fontSize="small" />}>
+        <TelemetryToggle />
+      </ToggleLayout>
     </>
   );
-};
+});
 
 /**
  * CoPilot page - camera grid with telemetry displays.
  */
 export const CoPilot = () => {
-  // Empty sidebar - controls are in the main content area
-  const sidebarFactory = useCallback(() => <CoPilotSidebarNav />, []);
+  const { state } = useAppStateContext();
+  const telemetryTitle = `Telemetry (${state.selectedTelemetry.length}/${MAX_TELEMETRY_SELECTIONS})`;
+
+  const sidebarFactory = useCallback(
+    () => <CoPilotSidebarNav title={telemetryTitle} />,
+    [telemetryTitle],
+  );
+
   useSidebarContent(sidebarFactory);
 
   return (

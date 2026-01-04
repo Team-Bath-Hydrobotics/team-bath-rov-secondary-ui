@@ -28,6 +28,7 @@ export const getTheme = (mode: PaletteMode) =>
       text: {
         primary: mode === 'light' ? '#000000' : '#ffffff',
         secondary: mode === 'light' ? '#E94560' : '#E94560',
+        disabled: mode === 'light' ? '#606060' : '#909090',
       },
       divider: mode === 'light' ? '#90909087' : '#b0b0b07e',
     },
