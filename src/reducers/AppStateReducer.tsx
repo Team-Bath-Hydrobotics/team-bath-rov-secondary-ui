@@ -40,24 +40,28 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
     }
 
     case 'TOGGLE_TELEMETRY': {
-      const isSelected = state.selectedTelemetry.includes(action.fieldId);
-
+      const isCopilot = action.isCopilot ?? false;
+      const key = isCopilot ? 'selectedTelemetryCopilot' : 'selectedTelemetry';
+      const selectedArray = state[key];
+      const isSelected = selectedArray.includes(action.fieldId);
       // Always allow deselection
       if (isSelected) {
         return {
           ...state,
-          selectedTelemetry: state.selectedTelemetry.filter((id) => id !== action.fieldId),
+          [key]: selectedArray.filter((id) => id !== action.fieldId),
         };
       }
 
       // Prevent selecting more than MAX_TELEMETRY_SELECTIONS
-      if (state.selectedTelemetry.length >= MAX_TELEMETRY_SELECTIONS) {
-        return state;
+      if (isCopilot) {
+        if (selectedArray.length >= MAX_TELEMETRY_SELECTIONS) {
+          return state;
+        }
       }
 
       return {
         ...state,
-        selectedTelemetry: [...state.selectedTelemetry, action.fieldId],
+        [key]: [...selectedArray, action.fieldId],
       };
     }
 

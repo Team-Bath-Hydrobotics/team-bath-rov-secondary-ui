@@ -11,7 +11,6 @@ import { ToggleLayout } from '../../layouts/ToggleLayout';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import React from 'react';
 import { TelemetryToggle } from '../../components/Toggles';
-import { MAX_TELEMETRY_SELECTIONS } from '../../types/constants/telemetryFields';
 /**
  * Main content with inline controls panel and masonry grid.
  */
@@ -51,14 +50,13 @@ const TelemetrySidebarNav = React.memo(({ title }: TelemetrySidebarNavProps) => 
   return (
     <>
       <ToggleLayout title={title} icon={<ShowChartIcon fontSize="small" />}>
-        <TelemetryToggle />
+        <TelemetryToggle isCopilot={false} />
       </ToggleLayout>
     </>
   );
 });
 export const Telemetry = () => {
-  const { state } = useAppStateContext();
-  const telemetryTitle = `Telemetry (${state.selectedTelemetry.length}/${MAX_TELEMETRY_SELECTIONS})`;
+  const telemetryTitle = 'Telemetry';
 
   const sidebarFactory = useCallback(
     () => <TelemetrySidebarNav title={telemetryTitle} />,

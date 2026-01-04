@@ -5,6 +5,9 @@ export interface AppState {
   cameras: CameraStateMap;
 
   /** Array of currently selected telemetry field IDs (max 3) */
+  selectedTelemetryCopilot: TelemetryFieldId[];
+
+  /** Array of currently selected telemetry field IDs */
   selectedTelemetry: TelemetryFieldId[];
 
   /** Is the sidebar currently open/expanded? */
@@ -36,13 +39,13 @@ export interface AppStateContextValue {
    * Toggle a telemetry field selection.
    * Returns false if trying to select when already at max (3).
    */
-  toggleTelemetry: (fieldId: TelemetryFieldId) => boolean;
+  toggleTelemetry: (fieldId: TelemetryFieldId, maxApplies: boolean, isCopilot: boolean) => boolean;
 
   /** Open or close the sidebar */
   setSidebarOpen: (open: boolean) => void;
 
   /** Computed value: can the user select more telemetry fields? */
-  canSelectMoreTelemetry: boolean;
+  canSelectMoreTelemetry: (isCopilot: boolean) => boolean;
 }
 
 /**
@@ -57,6 +60,6 @@ export interface AppStateContextValue {
 export type AppStateAction =
   | { type: 'TOGGLE_CAMERA'; cameraId: number }
   | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
-  | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId }
+  | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] };

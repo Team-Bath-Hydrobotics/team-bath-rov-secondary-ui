@@ -20,7 +20,7 @@ export const CameraToggle = React.memo(() => {
             control={
               <Checkbox
                 checked={isEnabled}
-                onChange={() => toggleCamera(Number(camera.id))}
+                onChange={() => toggleCamera(camera.id)}
                 size="small"
                 sx={{
                   '&.Mui-checked': {

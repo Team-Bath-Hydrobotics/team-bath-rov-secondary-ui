@@ -7,10 +7,16 @@ import React from 'react';
  * Telemetry selection controls for the sidebar.
  * Displays checkboxes grouped by category with max 3 selection limit.
  */
-export const TelemetryToggle = React.memo(() => {
-  const { state, toggleTelemetry, canSelectMoreTelemetry } = useAppStateContext();
-  const { selectedTelemetry } = state;
 
+interface TelemetryToggleProps {
+  isCopilot: boolean;
+}
+
+export const TelemetryToggle = React.memo(({ isCopilot }: TelemetryToggleProps) => {
+  const { state, toggleTelemetry, canSelectMoreTelemetry } = useAppStateContext();
+  console.log('Rendering TelemetryToggle, isCopilot:', isCopilot);
+  const selectedTelemetry = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
+  console.log('Selected telemetry for', isCopilot ? 'Copilot:' : 'Standard:', selectedTelemetry);
   const categories: TelemetryCategory[] = [
     'attitude',
     'angular',
@@ -32,21 +38,20 @@ export const TelemetryToggle = React.memo(() => {
             <FormGroup>
               {fieldsInCategory.map((field) => {
                 const isSelected = selectedTelemetry.includes(field.id);
-                const isDisabled = !isSelected && !canSelectMoreTelemetry;
-
+                const isDisabled = !isSelected && !canSelectMoreTelemetry(isCopilot);
                 return (
                   <FormControlLabel
                     key={field.id}
                     control={
                       <Checkbox
                         checked={isSelected}
-                        onChange={() => toggleTelemetry(field.id)}
+                        onChange={() => toggleTelemetry(field.id, isCopilot, isCopilot)}
                         disabled={isDisabled}
                         size="small"
                         sx={{
-                          color: isDisabled ? 'green' : 'text.secondary',
+                          color: isDisabled ? 'text.disabled' : 'text.secondary',
                           '&.Mui-checked': {
-                            color: 'success.main', // Green when checked
+                            color: 'success.main',
                           },
                         }}
                       />

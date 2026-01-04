@@ -20,12 +20,12 @@ import React from 'react';
  */
 const CoPilotContent = () => {
   const { state, cameraConfigs } = useAppStateContext();
-  const { selectedTelemetry } = state;
+  const { selectedTelemetryCopilot } = state;
 
   const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
   const selectedTelemetryFields = useMemo(
-    () => TELEMETRY_FIELDS.filter((f) => selectedTelemetry.includes(f.id)),
-    [selectedTelemetry],
+    () => TELEMETRY_FIELDS.filter((f) => selectedTelemetryCopilot.includes(f.id)),
+    [selectedTelemetryCopilot],
   );
 
   const cameraTiles = useMemo(
@@ -78,7 +78,7 @@ const CoPilotSidebarNav = React.memo(({ title }: CoPilotSidebarNavProps) => {
         <CameraToggle />
       </ToggleLayout>
       <ToggleLayout title={title} icon={<ShowChartIcon fontSize="small" />}>
-        <TelemetryToggle />
+        <TelemetryToggle isCopilot={true} />
       </ToggleLayout>
     </>
   );
@@ -89,7 +89,7 @@ const CoPilotSidebarNav = React.memo(({ title }: CoPilotSidebarNavProps) => {
  */
 export const CoPilot = () => {
   const { state } = useAppStateContext();
-  const telemetryTitle = `Telemetry (${state.selectedTelemetry.length}/${MAX_TELEMETRY_SELECTIONS})`;
+  const telemetryTitle = `Telemetry (${state.selectedTelemetryCopilot.length}/${MAX_TELEMETRY_SELECTIONS})`;
 
   const sidebarFactory = useCallback(
     () => <CoPilotSidebarNav title={telemetryTitle} />,

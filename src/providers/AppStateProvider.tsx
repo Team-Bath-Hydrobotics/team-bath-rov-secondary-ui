@@ -26,7 +26,7 @@ export const AppStateProvider = ({
       ]),
     );
     console.log('[AppStateProvider] Initializing cameras:', cameras);
-    return { cameras, selectedTelemetry: [], sidebarOpen: true };
+    return { cameras, selectedTelemetryCopilot: [], selectedTelemetry: [], sidebarOpen: true };
   });
 
   // Log state on every render
@@ -46,19 +46,19 @@ export const AppStateProvider = ({
   }, []);
 
   const toggleTelemetry = useCallback(
-    (fieldId: TelemetryFieldId): boolean => {
-      const isSelected = state.selectedTelemetry.includes(fieldId);
-      const canAdd = state.selectedTelemetry.length < MAX_TELEMETRY_SELECTIONS;
-      console.log(
-        `[AppStateProvider] Toggling telemetry: ${fieldId} | selected=${isSelected} | canAdd=${canAdd}`,
-      );
+    (fieldId: TelemetryFieldId, maxApplies: boolean, isCopilot: boolean): boolean => {
+      console.log('[AppStateProvider] Toggling telemetry:', fieldId, 'isCopilot:', isCopilot);
+      const selectedArray = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
+      const isSelected = selectedArray.includes(fieldId);
 
-      if (!isSelected && !canAdd) return false;
+      if (!isSelected && maxApplies && selectedArray.length >= MAX_TELEMETRY_SELECTIONS) {
+        return false;
+      }
 
-      dispatch({ type: 'TOGGLE_TELEMETRY', fieldId });
+      dispatch({ type: 'TOGGLE_TELEMETRY', fieldId, isCopilot });
       return true;
     },
-    [state.selectedTelemetry],
+    [state.selectedTelemetryCopilot, state.selectedTelemetry],
   );
 
   const setSidebarOpen = useCallback((open: boolean) => {
@@ -66,9 +66,15 @@ export const AppStateProvider = ({
     dispatch({ type: 'SET_SIDEBAR_OPEN', open });
   }, []);
 
-  const canSelectMoreTelemetry = useMemo(
-    () => state.selectedTelemetry.length < MAX_TELEMETRY_SELECTIONS,
-    [state.selectedTelemetry.length],
+  const canSelectMoreTelemetry = useCallback(
+    (isCopilot: boolean) => {
+      const selectedArray = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
+      if (isCopilot) {
+        return selectedArray.length < MAX_TELEMETRY_SELECTIONS;
+      }
+      return true;
+    },
+    [state.selectedTelemetryCopilot, state.selectedTelemetry],
   );
 
   const contextValue = useMemo<AppStateContextValue>(
