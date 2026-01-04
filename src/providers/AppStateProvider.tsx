@@ -1,57 +1,47 @@
-import { type ReactNode } from 'react';
-import { useReducer, useCallback, useMemo } from 'react';
+import { type ReactNode, useMemo, useReducer, useCallback, useEffect } from 'react';
 import { AppStateReducer } from '../reducers/AppStateReducer';
 import { AppStateContext } from '../context/AppStateContext';
-import {
-  type CameraStateMap,
-  type AppState,
-  type AppStateContextValue,
-  type CameraConfig,
-  type TelemetryFieldId,
-} from '../types';
-const initialState: AppState = {
-  cameras: {},
-  selectedTelemetry: [],
-  sidebarOpen: true,
-};
+import { type AppStateContextValue, type CameraConfig, type TelemetryFieldId } from '../types';
+import { DEFAULT_CAMERAS } from '../types/constants';
 
 interface AppStateProviderProps {
   children: ReactNode;
   cameraConfigs?: CameraConfig[];
 }
 
-/**
- * Provider component that wraps the AppState page and provides state to all children.
- * Optionally accepts custom camera configurations.
- */
-const DEFAULT_CAMERAS: CameraConfig[] = [
-  { id: 'cam1', name: 'Front Camera', defaultEnabled: true },
-  { id: 'cam2', name: 'Rear Camera', defaultEnabled: false },
-];
 export const AppStateProvider = ({
   children,
   cameraConfigs = DEFAULT_CAMERAS,
 }: AppStateProviderProps) => {
-  // Initialize state with camera configs
   const MAX_TELEMETRY_SELECTIONS = 3;
-  const [state, dispatch] = useReducer(AppStateReducer, initialState, (initial) => {
-    const cameraStates: CameraStateMap = {};
-    cameraConfigs.forEach((config) => {
-      cameraStates[config.id] = {
-        id: config.id,
-        enabled: config.defaultEnabled,
-        isRecording: false,
-      };
-    });
-    return { ...initial, cameras: cameraStates };
+
+  const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, []);
+
+  // Lazy init reducer to avoid resetting on re-renders
+  const [state, dispatch] = useReducer(AppStateReducer, stableCameraConfigs, (configs) => {
+    const cameras = Object.fromEntries(
+      configs.map((config) => [
+        config.id,
+        { id: config.id, enabled: config.defaultEnabled, isRecording: false },
+      ]),
+    );
+    console.log('[AppStateProvider] Initializing cameras:', cameras);
+    return { cameras, selectedTelemetry: [], sidebarOpen: true };
   });
 
-  // Action dispatchers
+  // Log state on every render
+  useEffect(() => {
+    console.log('[AppStateProvider] Current state:', state);
+  }, [state]);
+
+  // Action dispatchers with logging
   const toggleCamera = useCallback((cameraId: string) => {
+    console.log('[AppStateProvider] Toggling camera:', cameraId);
     dispatch({ type: 'TOGGLE_CAMERA', cameraId });
   }, []);
 
   const setCameraRecording = useCallback((cameraId: string, isRecording: boolean) => {
+    console.log(`[AppStateProvider] Set camera recording: ${cameraId} = ${isRecording}`);
     dispatch({ type: 'SET_CAMERA_RECORDING', cameraId, isRecording });
   }, []);
 
@@ -59,11 +49,11 @@ export const AppStateProvider = ({
     (fieldId: TelemetryFieldId): boolean => {
       const isSelected = state.selectedTelemetry.includes(fieldId);
       const canAdd = state.selectedTelemetry.length < MAX_TELEMETRY_SELECTIONS;
+      console.log(
+        `[AppStateProvider] Toggling telemetry: ${fieldId} | selected=${isSelected} | canAdd=${canAdd}`,
+      );
 
-      // Return false if trying to add when at max
-      if (!isSelected && !canAdd) {
-        return false;
-      }
+      if (!isSelected && !canAdd) return false;
 
       dispatch({ type: 'TOGGLE_TELEMETRY', fieldId });
       return true;
@@ -72,6 +62,7 @@ export const AppStateProvider = ({
   );
 
   const setSidebarOpen = useCallback((open: boolean) => {
+    console.log('[AppStateProvider] Set sidebar open:', open);
     dispatch({ type: 'SET_SIDEBAR_OPEN', open });
   }, []);
 
@@ -83,7 +74,7 @@ export const AppStateProvider = ({
   const contextValue = useMemo<AppStateContextValue>(
     () => ({
       state,
-      cameraConfigs,
+      cameraConfigs: stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
       toggleTelemetry,
@@ -92,7 +83,7 @@ export const AppStateProvider = ({
     }),
     [
       state,
-      cameraConfigs,
+      stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
       toggleTelemetry,

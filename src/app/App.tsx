@@ -7,24 +7,21 @@ import { IcebergThreat } from '../pages/IcebergThreat';
 import { Photogrammetry } from '../pages/Photogrammetry';
 import { CoPilot } from '../pages/CoPilot';
 import { EDna } from '../pages/EDna';
-import { AppStateProvider } from '../providers/AppStateProvider';
 
 function App() {
   return (
     <BrowserRouter>
-      <AppStateProvider>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Navigate to="copilot" replace />} />
-            <Route path="copilot" element={<CoPilot />} />
-            <Route path="telemetry" element={<Telemetry />} />
-            <Route path="detection" element={<Detection />} />
-            <Route path="edna" element={<EDna />} />
-            <Route path="iceberg-threat" element={<IcebergThreat />} />
-            <Route path="photogrammetry" element={<Photogrammetry />} />
-          </Route>
-        </Routes>
-      </AppStateProvider>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Navigate to="copilot" replace />} />
+          <Route path="copilot" element={<CoPilot />} />
+          <Route path="telemetry" element={<Telemetry />} />
+          <Route path="detection" element={<Detection />} />
+          <Route path="edna" element={<EDna />} />
+          <Route path="iceberg-threat" element={<IcebergThreat />} />
+          <Route path="photogrammetry" element={<Photogrammetry />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }

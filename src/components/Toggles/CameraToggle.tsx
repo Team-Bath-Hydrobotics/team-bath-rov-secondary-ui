@@ -1,12 +1,12 @@
 import { Box, Typography, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import { useAppStateContext } from '../../context';
-
+import React from 'react';
 /**
  * Camera toggle controls for the sidebar.
  * Displays a checkbox for each camera to enable/disable it.
  */
-export const CameraToggle = () => {
+export const CameraToggle = React.memo(() => {
   const { cameraConfigs, state, toggleCamera } = useAppStateContext();
 
   return (
@@ -46,4 +46,4 @@ export const CameraToggle = () => {
       </FormGroup>
     </Box>
   );
-};
+});

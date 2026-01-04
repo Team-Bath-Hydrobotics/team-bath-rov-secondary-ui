@@ -7,12 +7,12 @@ import {
   TELEMETRY_CATEGORY_LABELS,
 } from '../../types/constants/telemetryFields';
 import type { TelemetryCategory } from '../../types';
-
+import React from 'react';
 /**
  * Telemetry selection controls for the sidebar.
  * Displays checkboxes grouped by category with max 3 selection limit.
  */
-export const TelemetryToggle = () => {
+export const TelemetryToggle = React.memo(() => {
   const { state, toggleTelemetry, canSelectMoreTelemetry } = useAppStateContext();
   const { selectedTelemetry } = state;
 
@@ -75,4 +75,4 @@ export const TelemetryToggle = () => {
       })}
     </Box>
   );
-};
+});
