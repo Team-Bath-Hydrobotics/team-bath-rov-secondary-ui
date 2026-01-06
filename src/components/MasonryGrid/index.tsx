@@ -1,4 +1,4 @@
-import { Children, type ReactNode } from 'react';
+import { Children, useMemo, type ReactNode } from 'react';
 import { Box } from '@mui/material';
 import Masonry from '@mui/lab/Masonry';
 
@@ -16,14 +16,13 @@ interface MasonryGridProps {
  */
 export const MasonryGrid = ({
   children,
-  columns = { xs: 1, sm: 2, md: 3, lg: 4 },
-  spacing = 2,
+  columns = { xs: 1, sm: 2, md: 3 },
+  spacing = 1,
 }: MasonryGridProps) => {
-  // Filter out null/undefined children (Masonry requires non-null children)
-  const validChildren = Children.toArray(children);
+  const validChildren = useMemo(() => Children.toArray(children), [children]);
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ flex: 1, height: 800, display: 'flex', flexDirection: 'column', padding: 2 }}>
       <Masonry columns={columns} spacing={spacing}>
         {validChildren}
       </Masonry>

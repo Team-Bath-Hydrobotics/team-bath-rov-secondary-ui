@@ -1,26 +1,13 @@
-/**
- * CoPilot page state and context types.
- *
- * These types define the overall state management for the CoPilot page,
- * combining camera and telemetry state into a single structure.
- */
-
-// 'import type' only imports the TYPE information, not any runtime code
-// This is a TypeScript best practice - it disappears after compilation
 import type { CameraConfig, CameraStateMap } from './camera.types';
 import type { TelemetryFieldId } from './telemetry.types';
-
-/**
- * The complete state of the CoPilot page.
- *
- * This is what gets stored and managed by React Context.
- * Think of it as a "snapshot" of everything on the page.
- */
-export interface CoPilotState {
+export interface AppState {
   /** Map of camera ID → camera state (enabled, recording, etc.) */
   cameras: CameraStateMap;
 
   /** Array of currently selected telemetry field IDs (max 3) */
+  selectedTelemetryCopilot: TelemetryFieldId[];
+
+  /** Array of currently selected telemetry field IDs */
   selectedTelemetry: TelemetryFieldId[];
 
   /** Is the sidebar currently open/expanded? */
@@ -35,34 +22,34 @@ export interface CoPilotState {
  *
  * This pattern is called "state + dispatch" - common in React applications.
  */
-export interface CoPilotContextValue {
+export interface AppStateContextValue {
   /** Current state (read-only, modify through actions) */
-  state: CoPilotState;
+  state: AppState;
 
   /** Available camera configurations */
   cameraConfigs: CameraConfig[];
 
   /** Toggle a camera on/off */
-  toggleCamera: (cameraId: string) => void;
+  toggleCamera: (cameraId: number) => void;
 
   /** Set whether a camera is recording */
-  setCameraRecording: (cameraId: string, isRecording: boolean) => void;
+  setCameraRecording: (cameraId: number, isRecording: boolean) => void;
 
   /**
    * Toggle a telemetry field selection.
    * Returns false if trying to select when already at max (3).
    */
-  toggleTelemetry: (fieldId: TelemetryFieldId) => boolean;
+  toggleTelemetry: (fieldId: TelemetryFieldId, maxApplies: boolean, isCopilot: boolean) => boolean;
 
   /** Open or close the sidebar */
   setSidebarOpen: (open: boolean) => void;
 
   /** Computed value: can the user select more telemetry fields? */
-  canSelectMoreTelemetry: boolean;
+  canSelectMoreTelemetry: (isCopilot: boolean) => boolean;
 }
 
 /**
- * Actions that can be dispatched to modify the CoPilot state.
+ * Actions that can be dispatched to modify the AppState.
  *
  * This is a "discriminated union" - each action has a unique 'type'
  * that TypeScript uses to know what other properties are available.
@@ -70,9 +57,9 @@ export interface CoPilotContextValue {
  * Example:
  *   dispatch({ type: 'TOGGLE_CAMERA', cameraId: 'front' })
  */
-export type CoPilotAction =
-  | { type: 'TOGGLE_CAMERA'; cameraId: string }
-  | { type: 'SET_CAMERA_RECORDING'; cameraId: string; isRecording: boolean }
-  | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId }
+export type AppStateAction =
+  | { type: 'TOGGLE_CAMERA'; cameraId: number }
+  | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
+  | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] };

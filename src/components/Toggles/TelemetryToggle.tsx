@@ -1,21 +1,22 @@
 import { Box, Typography, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import { useCoPilot } from '../../context';
-import {
-  TELEMETRY_FIELDS,
-  MAX_TELEMETRY_SELECTIONS,
-  TELEMETRY_CATEGORY_LABELS,
-} from '../../constants';
-import type { TelemetryCategory } from '../../../../types';
-
+import { useAppStateContext } from '../../context';
+import { TELEMETRY_FIELDS, TELEMETRY_CATEGORY_LABELS } from '../../types/constants/telemetryFields';
+import type { TelemetryCategory } from '../../types';
+import React from 'react';
 /**
  * Telemetry selection controls for the sidebar.
  * Displays checkboxes grouped by category with max 3 selection limit.
  */
-export const TelemetryControls = () => {
-  const { state, toggleTelemetry, canSelectMoreTelemetry } = useCoPilot();
-  const { selectedTelemetry } = state;
 
+interface TelemetryToggleProps {
+  isCopilot: boolean;
+}
+
+export const TelemetryToggle = React.memo(({ isCopilot }: TelemetryToggleProps) => {
+  const { state, toggleTelemetry, canSelectMoreTelemetry } = useAppStateContext();
+  console.log('Rendering TelemetryToggle, isCopilot:', isCopilot);
+  const selectedTelemetry = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
+  console.log('Selected telemetry for', isCopilot ? 'Copilot:' : 'Standard:', selectedTelemetry);
   const categories: TelemetryCategory[] = [
     'attitude',
     'angular',
@@ -25,16 +26,7 @@ export const TelemetryControls = () => {
   ];
 
   return (
-    <Box>
-      <Typography
-        variant="subtitle2"
-        color="text.secondary"
-        sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
-      >
-        <ShowChartIcon fontSize="small" />
-        Telemetry ({selectedTelemetry.length}/{MAX_TELEMETRY_SELECTIONS})
-      </Typography>
-
+    <>
       {categories.map((category) => {
         const fieldsInCategory = TELEMETRY_FIELDS.filter((f) => f.category === category);
 
@@ -46,17 +38,22 @@ export const TelemetryControls = () => {
             <FormGroup>
               {fieldsInCategory.map((field) => {
                 const isSelected = selectedTelemetry.includes(field.id);
-                const isDisabled = !isSelected && !canSelectMoreTelemetry;
-
+                const isDisabled = !isSelected && !canSelectMoreTelemetry(isCopilot);
                 return (
                   <FormControlLabel
                     key={field.id}
                     control={
                       <Checkbox
                         checked={isSelected}
-                        onChange={() => toggleTelemetry(field.id)}
+                        onChange={() => toggleTelemetry(field.id, isCopilot, isCopilot)}
                         disabled={isDisabled}
                         size="small"
+                        sx={{
+                          color: isDisabled ? 'text.disabled' : 'text.secondary',
+                          '&.Mui-checked': {
+                            color: 'success.main',
+                          },
+                        }}
                       />
                     }
                     label={`${field.label}${field.unit ? ` (${field.unit})` : ''}`}
@@ -73,6 +70,6 @@ export const TelemetryControls = () => {
           </Box>
         );
       })}
-    </Box>
+    </>
   );
-};
+});

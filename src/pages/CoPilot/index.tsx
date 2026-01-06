@@ -1,85 +1,106 @@
 import { useCallback } from 'react';
-import { Box } from '@mui/material';
 import { useSidebarContent } from '../../hooks/useSidebarContent';
 import { MainContentLayout } from '../../layouts/MainContentLayout';
-import { CoPilotProvider, useCoPilot } from '../../features/copilot';
-import { CameraControls, TelemetryControls } from '../../features/copilot/components/Sidebar';
-import { MasonryGrid } from '../../features/copilot/components/MasonryGrid';
-import { CameraTile } from '../../features/copilot/components/CameraTile';
-import { TelemetryTile } from '../../features/copilot/components/TelemetryTile';
-import { TELEMETRY_FIELDS } from '../../features/copilot/constants';
-
+import { CameraToggle } from '../../components/Toggles';
+import { TelemetryToggle } from '../../components/Toggles';
+import { MasonryGrid } from '../../components/MasonryGrid';
+import { CameraTile } from '../../components/Tiles/CameraTile';
+import { TelemetryTile } from '../../components/Tiles/TelemetryTile';
+import { MAX_TELEMETRY_SELECTIONS, TELEMETRY_FIELDS } from '../../types/constants/telemetryFields';
+import { useAppStateContext } from '../../context';
+import { Box } from '@mui/material';
+import { useMemo } from 'react';
+import { DEFAULT_CAMERAS } from '../../types/constants';
+import { ToggleLayout } from '../../layouts/ToggleLayout';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import React from 'react';
 /**
  * Main content with inline controls panel and masonry grid.
  */
 const CoPilotContent = () => {
-  const { state, cameraConfigs } = useCoPilot();
-  const { selectedTelemetry } = state;
+  const { state, cameraConfigs } = useAppStateContext();
+  const { selectedTelemetryCopilot } = state;
 
-  const selectedTelemetryFields = TELEMETRY_FIELDS.filter((f) => selectedTelemetry.includes(f.id));
+  const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
+  const selectedTelemetryFields = useMemo(
+    () => TELEMETRY_FIELDS.filter((f) => selectedTelemetryCopilot.includes(f.id)),
+    [selectedTelemetryCopilot],
+  );
 
+  const cameraTiles = useMemo(
+    () =>
+      stableCameraConfigs.map((camera) => {
+        const cameraState = state.cameras[camera.id];
+        return (
+          <CameraTile
+            key={camera.id}
+            cameraId={camera.id}
+            name={camera.name}
+            enabled={cameraState?.enabled ?? false}
+            isRecording={cameraState?.isRecording ?? false}
+          />
+        );
+      }),
+    [stableCameraConfigs, state.cameras],
+  );
+
+  const telemetryTiles = useMemo(
+    () =>
+      selectedTelemetryFields.map((field) => (
+        <TelemetryTile
+          key={field.id}
+          fieldId={field.id}
+          label={field.label}
+          unit={field.unit}
+          selected={true}
+        />
+      )),
+    [selectedTelemetryFields],
+  );
   return (
-    <Box sx={{ display: 'flex', height: '100%' }}>
-      {/* Controls panel (inside provider, so context works) */}
-      <Box
-        sx={{
-          width: 220,
-          flexShrink: 0,
-          borderRight: 1,
-          borderColor: 'divider',
-          overflowY: 'auto',
-          p: 2,
-        }}
-      >
-        <CameraControls />
-        <Box sx={{ my: 2 }} />
-        <TelemetryControls />
-      </Box>
-
-      {/* Masonry grid */}
-      <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto' }}>
-        <MasonryGrid>
-          {cameraConfigs.map((camera) => {
-            const cameraState = state.cameras[camera.id];
-            return (
-              <CameraTile
-                key={camera.id}
-                cameraId={camera.id}
-                name={camera.name}
-                enabled={cameraState?.enabled ?? false}
-                isRecording={cameraState?.isRecording ?? false}
-              />
-            );
-          })}
-
-          {selectedTelemetryFields.map((field) => (
-            <TelemetryTile
-              key={field.id}
-              fieldId={field.id}
-              label={field.label}
-              unit={field.unit}
-              selected={true}
-            />
-          ))}
-        </MasonryGrid>
-      </Box>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <MasonryGrid>
+        {cameraTiles}
+        {telemetryTiles}
+      </MasonryGrid>
     </Box>
   );
 };
+
+interface CoPilotSidebarNavProps {
+  title: string;
+}
+const CoPilotSidebarNav = React.memo(({ title }: CoPilotSidebarNavProps) => {
+  return (
+    <>
+      <ToggleLayout title="Cameras" icon={<VideocamIcon fontSize="small" />}>
+        <CameraToggle />
+      </ToggleLayout>
+      <ToggleLayout title={title} icon={<ShowChartIcon fontSize="small" />}>
+        <TelemetryToggle isCopilot={true} />
+      </ToggleLayout>
+    </>
+  );
+});
 
 /**
  * CoPilot page - camera grid with telemetry displays.
  */
 export const CoPilot = () => {
-  // Empty sidebar - controls are in the main content area
-  const sidebarFactory = useCallback(() => null, []);
+  const { state } = useAppStateContext();
+  const telemetryTitle = `Telemetry (${state.selectedTelemetryCopilot.length}/${MAX_TELEMETRY_SELECTIONS})`;
+
+  const sidebarFactory = useCallback(
+    () => <CoPilotSidebarNav title={telemetryTitle} />,
+    [telemetryTitle],
+  );
+
   useSidebarContent(sidebarFactory);
 
   return (
-    <CoPilotProvider>
-      <MainContentLayout name="Co-Pilot">
-        <CoPilotContent />
-      </MainContentLayout>
-    </CoPilotProvider>
+    <MainContentLayout name="Co-Pilot">
+      <CoPilotContent />
+    </MainContentLayout>
   );
 };
