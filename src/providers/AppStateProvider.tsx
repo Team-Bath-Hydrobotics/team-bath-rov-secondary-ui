@@ -3,6 +3,7 @@ import { AppStateReducer } from '../reducers/AppStateReducer';
 import { AppStateContext } from '../context/AppStateContext';
 import { type AppStateContextValue, type CameraConfig, type TelemetryFieldId } from '../types';
 import { DEFAULT_CAMERAS } from '../types/constants';
+import { type TelemetryPayload } from '../types';
 
 interface AppStateProviderProps {
   children: ReactNode;
@@ -26,7 +27,13 @@ export const AppStateProvider = ({
       ]),
     );
     console.log('[AppStateProvider] Initializing cameras:', cameras);
-    return { cameras, selectedTelemetryCopilot: [], selectedTelemetry: [], sidebarOpen: true };
+    return {
+      cameras,
+      selectedTelemetryCopilot: [],
+      selectedTelemetry: [],
+      sidebarOpen: true,
+      telemetry: {} as TelemetryPayload,
+    };
   });
 
   // Log state on every render
@@ -77,6 +84,10 @@ export const AppStateProvider = ({
     [state.selectedTelemetryCopilot, state.selectedTelemetry],
   );
 
+  const updateTelemetry = useCallback((payload: TelemetryPayload) => {
+    dispatch({ type: 'UPDATE_TELEMETRY', payload });
+  }, []);
+
   const contextValue = useMemo<AppStateContextValue>(
     () => ({
       state,
@@ -86,6 +97,7 @@ export const AppStateProvider = ({
       toggleTelemetry,
       setSidebarOpen,
       canSelectMoreTelemetry,
+      updateTelemetry,
     }),
     [
       state,
@@ -95,6 +107,7 @@ export const AppStateProvider = ({
       toggleTelemetry,
       setSidebarOpen,
       canSelectMoreTelemetry,
+      updateTelemetry,
     ],
   );
 

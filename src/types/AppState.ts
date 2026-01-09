@@ -1,5 +1,8 @@
 import type { CameraConfig, CameraStateMap } from './camera.types';
+import type { TelemetryDataPoint } from './constants';
 import type { TelemetryFieldId } from './telemetry.types';
+
+export type TelemetryPayload = Record<TelemetryFieldId, TelemetryDataPoint>;
 export interface AppState {
   /** Map of camera ID → camera state (enabled, recording, etc.) */
   cameras: CameraStateMap;
@@ -12,6 +15,8 @@ export interface AppState {
 
   /** Is the sidebar currently open/expanded? */
   sidebarOpen: boolean;
+
+  telemetry: TelemetryPayload;
 }
 
 /**
@@ -46,6 +51,9 @@ export interface AppStateContextValue {
 
   /** Computed value: can the user select more telemetry fields? */
   canSelectMoreTelemetry: (isCopilot: boolean) => boolean;
+
+  /** Update telemetry from an external source e.g MQTT broker */
+  updateTelemetry: (payload: TelemetryPayload) => void;
 }
 
 /**
@@ -62,4 +70,5 @@ export type AppStateAction =
   | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
   | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
-  | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] };
+  | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] }
+  | { type: 'UPDATE_TELEMETRY'; payload: TelemetryPayload };

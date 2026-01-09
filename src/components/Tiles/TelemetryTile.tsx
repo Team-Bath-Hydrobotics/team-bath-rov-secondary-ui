@@ -2,27 +2,38 @@ import { Paper, Box, Typography } from '@mui/material';
 import { useRef, useEffect } from 'react';
 import { LineChart, type LineChartHandle } from '../Charts/LineChart';
 import React from 'react';
+import type { TelemetryDataPoint } from '../../types/constants';
+
 interface TelemetryTileProps {
   fieldId: string;
   label: string;
-  unit: string;
   selected: boolean;
+  data?: TelemetryDataPoint;
 }
 
-export const TelemetryTile = React.memo(({ label, unit, selected }: TelemetryTileProps) => {
-  // REF TO THE CHART HANDLE, NOT uPlot
+export const TelemetryTile = React.memo(({ label, selected, data }: TelemetryTileProps) => {
   const chartRef = useRef<LineChartHandle>(null);
+  const prevValue = useRef<TelemetryDataPoint | null>(null);
 
-  // Add a new point every second (simulated telemetry)
   useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const timestamp = (Date.now() - startTime) / 1000;
-      const newValues = [Math.random() * 10, Math.random() * 10];
-      chartRef.current?.appendPoint(timestamp, newValues);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+    console.log('[TelemetryTile] Received data:', data);
+    if (data == null) return;
+
+    const numericValue = typeof data.value === 'number' ? data.value : parseFloat(data.value);
+    if (isNaN(numericValue)) {
+      console.warn(`[TelemetryTile] Non-numeric telemetry value received: ${data.value}`);
+      return;
+    }
+
+    // Avoid duplicate points if the value hasn't changed
+    if (
+      prevValue.current?.value !== numericValue &&
+      prevValue.current?.timestamp !== data.timestamp
+    ) {
+      chartRef.current?.appendPoint(data.timestamp, [numericValue]);
+      prevValue.current = data;
+    }
+  }, [data]);
 
   return (
     <Paper
@@ -49,7 +60,7 @@ export const TelemetryTile = React.memo(({ label, unit, selected }: TelemetryTil
           ref={chartRef}
           initialData={[[0], [0]]}
           labels={['Time', 'Value 1']}
-          units={['s', unit]}
+          units={['s', data?.unit ?? 'N/A']}
           title={label}
         />
       </Box>

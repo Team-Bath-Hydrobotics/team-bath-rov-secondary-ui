@@ -20,7 +20,7 @@ import React from 'react';
  */
 const CoPilotContent = () => {
   const { state, cameraConfigs } = useAppStateContext();
-  const { selectedTelemetryCopilot } = state;
+  const { selectedTelemetryCopilot, telemetry } = state;
 
   const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
   const selectedTelemetryFields = useMemo(
@@ -52,11 +52,11 @@ const CoPilotContent = () => {
           key={field.id}
           fieldId={field.id}
           label={field.label}
-          unit={field.unit}
           selected={true}
+          data={telemetry[field.id]}
         />
       )),
-    [selectedTelemetryFields],
+    [selectedTelemetryFields, telemetry],
   );
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

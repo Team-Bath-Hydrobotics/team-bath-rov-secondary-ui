@@ -70,9 +70,6 @@ export interface TelemetryFieldMeta {
   /** Human-readable label for display (e.g., "Depth", "Roll Angle") */
   label: string;
 
-  /** Unit of measurement (e.g., "m", "°C", "rad/s") */
-  unit: string;
-
   /** Category for grouping in the sidebar */
   category: TelemetryCategory;
 }

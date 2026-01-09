@@ -56,7 +56,7 @@ export const TelemetryToggle = React.memo(({ isCopilot }: TelemetryToggleProps) 
                         }}
                       />
                     }
-                    label={`${field.label}${field.unit ? ` (${field.unit})` : ''}`}
+                    label={`${field.label}`}
                     sx={{
                       '& .MuiFormControlLabel-label': {
                         fontSize: '0.8rem',

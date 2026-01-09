@@ -89,6 +89,16 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
       };
     }
 
+    case 'UPDATE_TELEMETRY': {
+      return {
+        ...state,
+        telemetry: {
+          ...state.telemetry,
+          ...action.payload,
+        },
+      };
+    }
+
     default:
       return state;
   }
