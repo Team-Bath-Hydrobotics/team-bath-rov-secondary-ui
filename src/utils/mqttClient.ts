@@ -1,7 +1,11 @@
 import mqtt from 'mqtt';
 import type { TelemetryPayload } from '../types';
 
-export const mqttClient = mqtt.connect(import.meta.env.VITE_MQTT_TLS_WEBSOCKET_URL, {
+const host = import.meta.env.VITE_MQTT_HOST;
+const port = import.meta.env.VITE_MQTT_PORT;
+const brokerUrl = `wss://${host}:${port}/mqtt`;
+
+export const mqttClient = mqtt.connect(brokerUrl, {
   username: import.meta.env.VITE_MQTT_USERNAME,
   password: import.meta.env.VITE_MQTT_PASSWORD,
 });
@@ -15,6 +19,11 @@ function isValidTelemetryField(
   return (
     typeof f.value === 'number' && typeof f.unit === 'string' && typeof f.timestamp === 'number'
   );
+}
+
+// Check if field is a string value (for fields like cardinal_direction)
+function isValidStringField(field: unknown): field is string {
+  return typeof field === 'string';
 }
 
 // Validate telemetry payload structure
@@ -31,6 +40,16 @@ export function isValidTelemetry(payload: unknown): payload is TelemetryPayload 
   // Check that all other fields (except id and timestamp) are valid telemetry fields
   for (const [key, value] of Object.entries(p)) {
     if (key === 'id' || key === 'timestamp') continue;
+
+    // Some fields like cardinal_direction are strings
+    if (key === 'cardinal_direction') {
+      if (!isValidStringField(value)) {
+        console.warn(`Invalid telemetry field: ${key}`, value);
+        return false;
+      }
+      continue;
+    }
+
     if (!isValidTelemetryField(value)) {
       console.warn(`Invalid telemetry field: ${key}`, value);
       return false;

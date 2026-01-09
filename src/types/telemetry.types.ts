@@ -45,6 +45,7 @@ export type TelemetryFieldId =
   | 'internal_temperature'
   | 'ambient_pressure'
   | 'grove_water_sensor'
+  | 'cardinal_direction'
   // Actuators (thrusters, 6 total)
   | 'actuator_1'
   | 'actuator_2'
