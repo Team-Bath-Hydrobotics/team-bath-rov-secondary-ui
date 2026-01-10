@@ -37,11 +37,9 @@ export function isValidTelemetry(payload: unknown): payload is TelemetryPayload 
     return false;
   }
 
-  // Check that all other fields (except id and timestamp) are valid telemetry fields
   for (const [key, value] of Object.entries(p)) {
     if (key === 'id' || key === 'timestamp') continue;
 
-    // Some fields like cardinal_direction are strings
     if (key === 'cardinal_direction') {
       if (!isValidStringField(value)) {
         console.warn(`Invalid telemetry field: ${key}`, value);
