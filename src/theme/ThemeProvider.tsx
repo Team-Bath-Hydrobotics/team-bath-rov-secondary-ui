@@ -8,7 +8,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
 
   const theme = useMemo(() => {
-    console.log('Generating theme for mode', mode);
     return getTheme(mode);
   }, [mode]);
 
