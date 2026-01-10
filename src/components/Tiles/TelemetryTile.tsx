@@ -16,7 +16,6 @@ export const TelemetryTile = React.memo(({ label, selected, data }: TelemetryTil
   const prevValue = useRef<TelemetryDataPoint | null>(null);
 
   useEffect(() => {
-    console.log('[TelemetryTile] Received data:', data);
     if (data == null) return;
 
     const numericValue = typeof data.value === 'number' ? data.value : parseFloat(data.value);

@@ -14,9 +14,7 @@ interface TelemetryToggleProps {
 
 export const TelemetryToggle = React.memo(({ isCopilot }: TelemetryToggleProps) => {
   const { state, toggleTelemetry, canSelectMoreTelemetry } = useAppStateContext();
-  console.log('Rendering TelemetryToggle, isCopilot:', isCopilot);
   const selectedTelemetry = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
-  console.log('Selected telemetry for', isCopilot ? 'Copilot:' : 'Standard:', selectedTelemetry);
   const categories: TelemetryCategory[] = [
     'attitude',
     'angular',
