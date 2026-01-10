@@ -16,7 +16,7 @@ import { TelemetryToggle } from '../../components/Toggles';
  */
 const TelemetryContent = () => {
   const { state } = useAppStateContext();
-  const { selectedTelemetry } = state;
+  const { selectedTelemetry, telemetry } = state;
 
   const selectedTelemetryFields = useMemo(
     () => TELEMETRY_FIELDS.filter((f) => selectedTelemetry.includes(f.id)),
@@ -30,11 +30,11 @@ const TelemetryContent = () => {
           key={field.id}
           fieldId={field.id}
           label={field.label}
-          unit={field.unit}
           selected={true}
+          data={telemetry[field.id]}
         />
       )),
-    [selectedTelemetryFields],
+    [selectedTelemetryFields, telemetry],
   );
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

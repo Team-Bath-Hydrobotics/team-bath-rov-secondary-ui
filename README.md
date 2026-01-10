@@ -33,6 +33,14 @@ npm install
 npm run dev
 ```
 
+To connect to the telemetry broker add the following in an env file at the project root
+```
+VITE_MQTT_HOST=<WS host name>
+VITE_MQTT_PORT=<Web socket port number>
+VITE_MQTT_USERNAME=<Find in teams>
+VITE_MQTT_PASSWORD=<Find in teams>
+```
+
 # Folder Structure
 ```
 ui/

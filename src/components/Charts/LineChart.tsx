@@ -69,7 +69,7 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
             show: false,
           },
           scales: {
-            x: { time: false },
+            x: { time: true },
             y: { auto: true },
           },
           axes: [

@@ -5,15 +5,18 @@ import App from './App.tsx';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { SidebarProvider } from '../providers/SidebarProvider';
 import { AppStateProvider } from '../providers/AppStateProvider';
+import { MqttProvider } from '../providers/MqttProvider.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppStateProvider>
-      <ThemeProvider>
-        <SidebarProvider>
-          <App />
-        </SidebarProvider>
-      </ThemeProvider>
+      <MqttProvider>
+        <ThemeProvider>
+          <SidebarProvider>
+            <App />
+          </SidebarProvider>
+        </ThemeProvider>
+      </MqttProvider>
     </AppStateProvider>
   </StrictMode>,
 );
