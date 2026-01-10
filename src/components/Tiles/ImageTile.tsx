@@ -28,7 +28,6 @@ export const ImageTile = ({ imagefile, altTitle }: ImageTileProps) => {
       sx={{
         position: 'relative',
         minWidth: 150,
-        minHeight: 250,
         aspectRatio: '16/9',
         overflow: 'hidden',
       }}
