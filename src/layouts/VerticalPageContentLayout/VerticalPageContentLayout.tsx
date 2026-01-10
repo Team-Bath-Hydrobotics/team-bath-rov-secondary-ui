@@ -12,8 +12,10 @@ export default function VerticalPageContentLayout({ children }: VerticalPageCont
         borderRadius: '16px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 1,
-        backgroundColor: 'green',
+        gap: 1.5,
+        padding: 1.5,
+        backgroundColor: 'primary.dark',
+        overflow: 'wrap',
       }}
     >
       {children}

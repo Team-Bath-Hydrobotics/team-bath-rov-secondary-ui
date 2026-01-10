@@ -1,7 +1,14 @@
-import { type ReactNode, useMemo, useReducer, useCallback, useEffect } from 'react';
+import { type ReactNode, useMemo, useReducer, useCallback } from 'react';
 import { AppStateReducer } from '../reducers/AppStateReducer';
 import { AppStateContext } from '../context/AppStateContext';
-import { type AppStateContextValue, type CameraConfig, type TelemetryFieldId } from '../types';
+import {
+  type AppStateContextValue,
+  type CameraConfig,
+  type IcebergCalculationData,
+  type PlatformData,
+  type TelemetryFieldId,
+} from '../types';
+import { ThreatLevel } from '../types';
 import { DEFAULT_CAMERAS } from '../types/constants';
 import { type TelemetryPayload } from '../types';
 
@@ -26,20 +33,56 @@ export const AppStateProvider = ({
         { id: config.id, enabled: config.defaultEnabled, isRecording: false },
       ]),
     );
-    console.log('[AppStateProvider] Initializing cameras:', cameras);
     return {
       cameras,
       selectedTelemetryCopilot: [],
       selectedTelemetry: [],
       sidebarOpen: true,
       telemetry: {} as TelemetryPayload,
+      icebergCalculationData: {
+        icebergDepth: 0,
+        platformData: [
+          {
+            id: 1,
+            name: 'Platform 1',
+            latitude: 0,
+            longitude: 0,
+            oceanDepth: 0,
+            generalThreatLevel: ThreatLevel.UNKNOWN,
+            subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
+          },
+          {
+            id: 2,
+            name: 'Platform 2',
+            latitude: 0,
+            longitude: 0,
+            oceanDepth: 0,
+            generalThreatLevel: ThreatLevel.UNKNOWN,
+            subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
+          },
+          {
+            id: 3,
+            name: 'Platform 3',
+            latitude: 0,
+            longitude: 0,
+            oceanDepth: 0,
+            generalThreatLevel: ThreatLevel.UNKNOWN,
+            subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
+          },
+          {
+            id: 4,
+            name: 'Platform 4',
+            latitude: 0,
+            longitude: 0,
+            oceanDepth: 0,
+            generalThreatLevel: ThreatLevel.UNKNOWN,
+            subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
+          },
+        ] as PlatformData[],
+        imageFile: null,
+      },
     };
   });
-
-  // Log state on every render
-  useEffect(() => {
-    console.log('[AppStateProvider] Current state:', state);
-  }, [state]);
 
   // Action dispatchers with logging
   const toggleCamera = useCallback((cameraId: number) => {
@@ -54,7 +97,6 @@ export const AppStateProvider = ({
 
   const toggleTelemetry = useCallback(
     (fieldId: TelemetryFieldId, maxApplies: boolean, isCopilot: boolean): boolean => {
-      console.log('[AppStateProvider] Toggling telemetry:', fieldId, 'isCopilot:', isCopilot);
       const selectedArray = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
       const isSelected = selectedArray.includes(fieldId);
 
@@ -88,6 +130,10 @@ export const AppStateProvider = ({
     dispatch({ type: 'UPDATE_TELEMETRY', payload });
   }, []);
 
+  const updateIcebergCalculationData = useCallback((data: IcebergCalculationData) => {
+    dispatch({ type: 'UPDATE_ICEBERG_DATA', icebergCalculationData: data });
+  }, []);
+
   const contextValue = useMemo<AppStateContextValue>(
     () => ({
       state,
@@ -98,6 +144,7 @@ export const AppStateProvider = ({
       setSidebarOpen,
       canSelectMoreTelemetry,
       updateTelemetry,
+      updateIcebergCalculationData,
     }),
     [
       state,
@@ -108,6 +155,7 @@ export const AppStateProvider = ({
       setSidebarOpen,
       canSelectMoreTelemetry,
       updateTelemetry,
+      updateIcebergCalculationData,
     ],
   );
 

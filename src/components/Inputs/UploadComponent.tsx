@@ -5,7 +5,7 @@ import { FileUpload } from '@mui/icons-material';
 interface UploadComponentProps {
   buttonText: string;
   displayText: string;
-  onChange: (newValue: string) => void;
+  onChange: (newValue: File[]) => void;
 }
 export const UploadComponent = ({ buttonText, displayText, onChange }: UploadComponentProps) => {
   return (
@@ -14,7 +14,12 @@ export const UploadComponent = ({ buttonText, displayText, onChange }: UploadCom
         <Button variant="contained" component="label">
           <FileUpload></FileUpload>
           {buttonText}
-          <input type="file" hidden onChange={(e) => onChange(e.target.value)} />
+          <input
+            type="file"
+            multiple
+            hidden
+            onChange={(e) => onChange(e.target.files ? Array.from(e.target.files) : [])}
+          />
         </Button>
         {displayText}
       </HorizontalPageContentLayout>

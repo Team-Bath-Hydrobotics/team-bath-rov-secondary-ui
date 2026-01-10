@@ -16,7 +16,6 @@ export default function HorizontalPageContentLayout({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 1,
-        backgroundColor: 'yellow',
         '& > *': {
           flex: '1 1 0',
           minWidth: '300px',

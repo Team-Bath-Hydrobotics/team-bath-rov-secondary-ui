@@ -98,7 +98,15 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
         },
       };
     }
-
+    case 'UPDATE_ICEBERG_DATA': {
+      return {
+        ...state,
+        icebergCalculationData: {
+          ...state.icebergCalculationData,
+          ...action.icebergCalculationData,
+        },
+      };
+    }
     default:
       return state;
   }

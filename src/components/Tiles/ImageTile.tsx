@@ -7,11 +7,20 @@ interface ImageTileProps {
 }
 
 export const ImageTile = ({ imagefile, altTitle }: ImageTileProps) => {
-  const imageUrl = useMemo(() => URL.createObjectURL(imagefile), [imagefile]);
+  const imageUrl = useMemo(() => {
+    if (imagefile.size === 0) return '';
+    return URL.createObjectURL(imagefile);
+  }, [imagefile]);
 
   useEffect(() => {
-    return () => URL.revokeObjectURL(imageUrl);
+    if (imageUrl) {
+      return () => URL.revokeObjectURL(imageUrl);
+    }
   }, [imageUrl]);
+
+  if (!imageUrl) {
+    return null;
+  }
 
   return (
     <Paper

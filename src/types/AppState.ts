@@ -1,8 +1,10 @@
 import type { CameraConfig, CameraStateMap } from './camera.types';
 import type { TelemetryDataPoint } from './constants';
 import type { TelemetryFieldId } from './telemetry.types';
+import type { IcebergCalculationData } from './platform.type';
 
 export type TelemetryPayload = Record<TelemetryFieldId, TelemetryDataPoint>;
+
 export interface AppState {
   /** Map of camera ID → camera state (enabled, recording, etc.) */
   cameras: CameraStateMap;
@@ -16,7 +18,11 @@ export interface AppState {
   /** Is the sidebar currently open/expanded? */
   sidebarOpen: boolean;
 
+  /** Latest telemetry data received */
   telemetry: TelemetryPayload;
+
+  /** Iceberg platform data for calculations */
+  icebergCalculationData: IcebergCalculationData;
 }
 
 /**
@@ -54,6 +60,9 @@ export interface AppStateContextValue {
 
   /** Update telemetry from an external source e.g MQTT broker */
   updateTelemetry: (payload: TelemetryPayload) => void;
+
+  /** Update iceberg input data for calculations*/
+  updateIcebergCalculationData: (data: IcebergCalculationData) => void;
 }
 
 /**
@@ -71,4 +80,5 @@ export type AppStateAction =
   | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] }
-  | { type: 'UPDATE_TELEMETRY'; payload: TelemetryPayload };
+  | { type: 'UPDATE_TELEMETRY'; payload: TelemetryPayload }
+  | { type: 'UPDATE_ICEBERG_DATA'; icebergCalculationData: IcebergCalculationData };

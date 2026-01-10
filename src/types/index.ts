@@ -13,7 +13,8 @@
 
 // Camera types
 export type { CameraConfig, CameraState, CameraStateMap } from './camera.types';
-
+export type { ThreatLevelType, PlatformData, IcebergCalculationData } from './platform.type';
+export { ThreatLevel } from './platform.type';
 // Telemetry types
 export type {
   TelemetryFieldId,

@@ -4,22 +4,65 @@ import { Box } from '@mui/material';
 interface FlexibleDataGridProps {
   data: GridValidRowModel[];
   columns: GridColDef<GridValidRowModel>[];
-  height?: number;
-  width?: number;
+  pageSize?: number;
+  rowHeight?: number;
+  onProcessRowUpdate?: (newRow: GridValidRowModel, oldRow: GridValidRowModel) => GridValidRowModel;
 }
 
-// ...existing code...
-export const FlexibleDataGrid = ({ data, columns, height, width }: FlexibleDataGridProps) => {
+export const FlexibleDataGrid = ({
+  data,
+  columns,
+  pageSize = 4,
+  rowHeight = 74,
+  onProcessRowUpdate,
+}: FlexibleDataGridProps) => {
+  console.log('FlexibleDataGrid data:', data);
   return (
     <Box
       sx={{
-        height: height || 400,
-        width: width || '100%',
+        height: 400,
+        width: '100%',
         display: 'flex',
-        backgroundColor: 'green',
       }}
     >
-      <DataGrid rows={data} columns={columns} sx={{ flex: 1, backgroundColor: 'red' }} />
+      <DataGrid
+        rows={data}
+        columns={columns}
+        rowHeight={rowHeight}
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize: pageSize, page: 0 },
+          },
+        }}
+        disableRowSelectionOnClick
+        hideFooterSelectedRowCount
+        pageSizeOptions={[pageSize]}
+        sx={{
+          flex: 1,
+          '& .MuiDataGrid-columnHeader:focus': {
+            backgroundColor: 'warning.light',
+          },
+          '& .MuiDataGrid-cell:focus': {
+            backgroundColor: 'warning.light',
+          },
+          '& .MuiDataGrid-columnHeader:focus-within': {
+            backgroundColor: 'warning.light',
+          },
+          '& .MuiDataGrid-cell:focus-within': {
+            backgroundColor: 'warning.light',
+          },
+          '& .MuiDataGrid-iconButtonContainer': {
+            color: 'primary.light',
+          },
+          '& .MuiDataGrid-sortIcon': {
+            color: 'primary.light',
+          },
+          '& .MuiDataGrid-menuIcon': {
+            color: 'primary.light',
+          },
+        }}
+        processRowUpdate={onProcessRowUpdate}
+      />
     </Box>
   );
 };
