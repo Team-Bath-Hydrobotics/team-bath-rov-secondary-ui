@@ -5,3 +5,4 @@ export {
   type TelemetryDataPoint,
 } from './telemetryFields';
 export { DEFAULT_CAMERAS } from './defaultCameras';
+export { SPECIES_LIST, SPECIES_COUNT, createInitialSpeciesEntries } from './speciesList';
