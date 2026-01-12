@@ -18,8 +18,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-// Default SonarView local server URL - can be configured
-const DEFAULT_SONARVIEW_URL = 'http://localhost:8000';
+// SonarView runs on port 7077 - see https://docs.ceruleansonar.com/c/sonarview
+const DEFAULT_SONARVIEW_URL = 'http://localhost:7077';
+const SONARVIEW_STATUS_ENDPOINT = 'http://localhost:7077/status';
 
 type ConnectionStatus = 'idle' | 'checking' | 'connected' | 'error';
 
@@ -48,28 +49,43 @@ export const SonarPlaceholder = ({
     severity: 'success' | 'error' | 'warning' | 'info';
   }>({ open: false, message: '', severity: 'info' });
 
-  // Check if SonarView server is reachable
+  // Check if SonarView/SonarLink server is reachable via status endpoint
   const checkConnection = useCallback(async (): Promise<boolean> => {
     setStatus('checking');
     try {
-      // Try to fetch from SonarView server with a timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      await fetch(sonarViewUrl, {
-        method: 'HEAD',
-        mode: 'no-cors', // SonarView may not have CORS headers
+      // SonarLink provides a /status endpoint that returns JSON
+      // See: https://docs.ceruleansonar.com/c/sonarview/sonarlink
+      const response = await fetch(SONARVIEW_STATUS_ENDPOINT, {
+        method: 'GET',
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      // With no-cors, we can't read response status, but if fetch succeeds, server is up
-      setStatus('connected');
-      return true;
+      if (response.ok) {
+        setStatus('connected');
+        return true;
+      } else {
+        setStatus('error');
+        return false;
+      }
     } catch {
-      setStatus('error');
-      return false;
+      // If CORS blocks us, try a no-cors request as fallback
+      try {
+        await fetch(sonarViewUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+        });
+        // If we get here, something is running on that port
+        setStatus('connected');
+        return true;
+      } catch {
+        setStatus('error');
+        return false;
+      }
     }
   }, [sonarViewUrl]);
 
