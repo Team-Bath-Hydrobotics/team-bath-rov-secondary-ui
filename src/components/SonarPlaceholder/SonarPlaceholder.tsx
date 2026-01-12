@@ -1,62 +1,41 @@
-import { useState, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
-  TextField,
-  Tooltip,
-} from '@mui/material';
+import { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, Button, Snackbar, Alert, CircularProgress } from '@mui/material';
 import RadarIcon from '@mui/icons-material/Radar';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import CloseIcon from '@mui/icons-material/Close';
-import SettingsIcon from '@mui/icons-material/Settings';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
-// SonarView runs on port 7077 - see https://docs.ceruleansonar.com/c/sonarview
-const DEFAULT_SONARVIEW_URL = 'http://localhost:7077';
+// SonarLink API runs on port 7077 - see https://docs.ceruleansonar.com/c/sonarview/sonarlink
+// Note: SonarView UI is an Electron app - it cannot be opened in a browser
 const SONARVIEW_STATUS_ENDPOINT = 'http://localhost:7077/status';
+const CHECK_INTERVAL_MS = 5000; // Check every 5 seconds when monitoring
 
 type ConnectionStatus = 'idle' | 'checking' | 'connected' | 'error';
 
-interface SonarPlaceholderProps {
-  /** Custom URL for SonarView server (default: http://localhost:8000) */
-  sonarViewUrl?: string;
-  /** Enable embedded iframe mode instead of new tab */
-  enableEmbedded?: boolean;
-}
-
 /**
- * SonarView launcher component.
- * Opens SonarView web interface in a new tab or embedded modal.
+ * SonarView status monitor component.
+ *
+ * SonarView is an Electron desktop app (not a web page).
+ * This component monitors if SonarView is running via the SonarLink API
+ * and displays the connection status to help the co-pilot.
  */
-export const SonarPlaceholder = ({
-  sonarViewUrl: initialUrl = DEFAULT_SONARVIEW_URL,
-  enableEmbedded = false,
-}: SonarPlaceholderProps) => {
+export const SonarPlaceholder = () => {
   const [status, setStatus] = useState<ConnectionStatus>('idle');
-  const [sonarViewUrl, setSonarViewUrl] = useState(initialUrl);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showEmbedded, setShowEmbedded] = useState(false);
+  const [isMonitoring, setIsMonitoring] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
     severity: 'success' | 'error' | 'warning' | 'info';
   }>({ open: false, message: '', severity: 'info' });
 
-  // Check if SonarView/SonarLink server is reachable via status endpoint
+  // Check if SonarView/SonarLink is running via status endpoint
   const checkConnection = useCallback(async (): Promise<boolean> => {
     setStatus('checking');
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      // SonarLink provides a /status endpoint that returns JSON
+      // SonarLink provides a /status endpoint
       // See: https://docs.ceruleansonar.com/c/sonarview/sonarlink
       const response = await fetch(SONARVIEW_STATUS_ENDPOINT, {
         method: 'GET',
@@ -73,13 +52,19 @@ export const SonarPlaceholder = ({
         return false;
       }
     } catch {
-      // If CORS blocks us, try a no-cors request as fallback
+      // If fetch fails (CORS, network error, etc.), try no-cors as fallback
       try {
-        await fetch(sonarViewUrl, {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        await fetch(SONARVIEW_STATUS_ENDPOINT, {
           method: 'HEAD',
           mode: 'no-cors',
+          signal: controller.signal,
         });
-        // If we get here, something is running on that port
+
+        clearTimeout(timeoutId);
+        // If we get here without throwing, something is running on that port
         setStatus('connected');
         return true;
       } catch {
@@ -87,49 +72,55 @@ export const SonarPlaceholder = ({
         return false;
       }
     }
-  }, [sonarViewUrl]);
+  }, []);
 
-  // Launch SonarView in new tab
-  const handleLaunchNewTab = useCallback(async () => {
+  // Manual check button handler
+  const handleCheckStatus = useCallback(async () => {
     const isConnected = await checkConnection();
 
     if (isConnected) {
-      window.open(sonarViewUrl, '_blank', 'noopener,noreferrer');
       setSnackbar({
         open: true,
-        message: 'SonarView opened in new tab',
+        message: 'SonarView is running! Use the desktop app window.',
         severity: 'success',
       });
     } else {
       setSnackbar({
         open: true,
-        message: 'Ensure SonarView application is running in background',
-        severity: 'warning',
-      });
-      // Still open the tab - user might need to start SonarView
-      window.open(sonarViewUrl, '_blank', 'noopener,noreferrer');
-    }
-  }, [checkConnection, sonarViewUrl]);
-
-  // Launch SonarView in embedded modal
-  const handleLaunchEmbedded = useCallback(async () => {
-    const isConnected = await checkConnection();
-
-    if (isConnected) {
-      setShowEmbedded(true);
-      setSnackbar({
-        open: true,
-        message: 'SonarView loaded',
-        severity: 'success',
-      });
-    } else {
-      setSnackbar({
-        open: true,
-        message: 'Ensure SonarView application is running in background',
+        message: 'SonarView not detected. Please launch the SonarView application.',
         severity: 'warning',
       });
     }
   }, [checkConnection]);
+
+  // Toggle continuous monitoring
+  const handleToggleMonitoring = useCallback(() => {
+    setIsMonitoring((prev) => !prev);
+  }, []);
+
+  // Check on mount
+  useEffect(() => {
+    // Use setTimeout to avoid synchronous setState in effect
+    const timeoutId = setTimeout(() => {
+      checkConnection();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Continuous monitoring when enabled
+  useEffect(() => {
+    if (!isMonitoring) return;
+
+    // Set up interval for continuous monitoring
+    const intervalId = setInterval(() => {
+      checkConnection();
+    }, CHECK_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [isMonitoring, checkConnection]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -151,13 +142,13 @@ export const SonarPlaceholder = ({
   const getStatusText = () => {
     switch (status) {
       case 'connected':
-        return 'Sonar Active';
+        return 'SonarView Running';
       case 'error':
-        return 'Not Connected';
+        return 'Not Detected';
       case 'checking':
         return 'Checking...';
       default:
-        return 'Ready';
+        return 'Unknown';
     }
   };
 
@@ -173,46 +164,30 @@ export const SonarPlaceholder = ({
           p: 4,
           backgroundColor: 'rgba(255, 255, 255, 0.05)',
           borderRadius: 2,
-          border: '1px solid',
+          border: '2px solid',
           borderColor: status === 'connected' ? 'success.main' : 'divider',
-          minHeight: 200,
-          position: 'relative',
+          minHeight: 220,
         }}
       >
-        {/* Settings button */}
-        <Tooltip title="Configure SonarView URL">
-          <IconButton
-            size="small"
-            onClick={() => setShowSettings(true)}
-            sx={{ position: 'absolute', top: 8, right: 8 }}
-          >
-            <SettingsIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        {/* Status indicator */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box
-            sx={{
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              backgroundColor: getStatusColor(),
-              animation: status === 'checking' ? 'pulse 1s infinite' : 'none',
-              '@keyframes pulse': {
-                '0%, 100%': { opacity: 1 },
-                '50%': { opacity: 0.5 },
-              },
-            }}
-          />
-          <Typography variant="body2" sx={{ color: getStatusColor(), fontWeight: 500 }}>
+        {/* Status indicator with icon */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {status === 'checking' ? (
+            <CircularProgress size={20} color="warning" />
+          ) : status === 'connected' ? (
+            <CheckCircleIcon sx={{ color: 'success.main', fontSize: 24 }} />
+          ) : status === 'error' ? (
+            <ErrorOutlineIcon sx={{ color: 'error.main', fontSize: 24 }} />
+          ) : (
+            <RadarIcon sx={{ color: 'text.secondary', fontSize: 24 }} />
+          )}
+          <Typography variant="h6" sx={{ color: getStatusColor(), fontWeight: 600 }}>
             {getStatusText()}
           </Typography>
         </Box>
 
-        <RadarIcon sx={{ fontSize: 48, color: getStatusColor() }} />
+        <RadarIcon sx={{ fontSize: 56, color: getStatusColor() }} />
 
-        <Typography variant="h6" color="text.primary">
+        <Typography variant="h5" color="text.primary" fontWeight={600}>
           SonarView
         </Typography>
 
@@ -220,91 +195,61 @@ export const SonarPlaceholder = ({
           variant="body2"
           color="text.secondary"
           textAlign="center"
-          sx={{ maxWidth: 350 }}
+          sx={{ maxWidth: 380 }}
         >
-          Launch the Cerulean SonarView interface to view sonar imagery from the Omniscan 450 FS.
+          SonarView is a <strong>desktop application</strong> - open it directly from your
+          applications folder. This panel monitors if it&apos;s running.
         </Typography>
 
         {/* Action buttons */}
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', mt: 1 }}>
           <Button
             variant={status === 'connected' ? 'contained' : 'outlined'}
             color={status === 'connected' ? 'success' : 'secondary'}
-            startIcon={status === 'checking' ? <CircularProgress size={16} /> : <OpenInNewIcon />}
-            onClick={handleLaunchNewTab}
+            startIcon={status === 'checking' ? <CircularProgress size={16} /> : <RefreshIcon />}
+            onClick={handleCheckStatus}
             disabled={status === 'checking'}
           >
-            {status === 'connected' ? 'Sonar Active - Open Tab' : 'Launch SonarView'}
+            Check Status
           </Button>
 
-          {enableEmbedded && (
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<RadarIcon />}
-              onClick={handleLaunchEmbedded}
-              disabled={status === 'checking'}
-            >
-              Open Embedded
-            </Button>
-          )}
+          <Button
+            variant={isMonitoring ? 'contained' : 'outlined'}
+            color={isMonitoring ? 'warning' : 'inherit'}
+            onClick={handleToggleMonitoring}
+            size="small"
+          >
+            {isMonitoring ? 'Stop Monitoring' : 'Auto-Monitor'}
+          </Button>
         </Box>
 
-        <Typography variant="caption" color="text.secondary">
-          Server: {sonarViewUrl}
-        </Typography>
-      </Box>
-
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onClose={() => setShowSettings(false)}>
-        <DialogTitle>SonarView Settings</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="SonarView Server URL"
-            value={sonarViewUrl}
-            onChange={(e) => setSonarViewUrl(e.target.value)}
-            placeholder="http://localhost:8000"
-            sx={{ mt: 1, minWidth: 300 }}
-            helperText="The URL where SonarView web interface is running"
-          />
-          <Button
-            variant="contained"
-            onClick={() => {
-              setShowSettings(false);
-              setStatus('idle');
-            }}
-            sx={{ mt: 2 }}
-          >
-            Save
-          </Button>
-        </DialogContent>
-      </Dialog>
-
-      {/* Embedded SonarView Modal */}
-      <Dialog
-        open={showEmbedded}
-        onClose={() => setShowEmbedded(false)}
-        maxWidth="xl"
-        fullWidth
-        slotProps={{ paper: { sx: { height: '80vh' } } }}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        {/* Instructions */}
+        <Box
+          sx={{
+            mt: 1,
+            p: 2,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            borderRadius: 1,
+            width: '100%',
+            maxWidth: 400,
+          }}
         >
-          SonarView - Embedded
-          <IconButton onClick={() => setShowEmbedded(false)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          <iframe
-            src={sonarViewUrl}
-            title="SonarView"
-            style={{ width: '100%', height: '100%', border: 'none' }}
-          />
-        </DialogContent>
-      </Dialog>
+          <Typography variant="caption" color="text.secondary" component="div">
+            <strong>To use SonarView:</strong>
+            <ol style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
+              <li>Open SonarView from Applications</li>
+              <li>Connect Omniscan 450 FS via Ethernet</li>
+              <li>Configure session in SonarView</li>
+            </ol>
+          </Typography>
+        </Box>
+
+        {isMonitoring && (
+          <Typography variant="caption" color="warning.main">
+            Auto-checking every 5 seconds...
+          </Typography>
+        )}
+      </Box>
 
       {/* Toast notifications */}
       <Snackbar
