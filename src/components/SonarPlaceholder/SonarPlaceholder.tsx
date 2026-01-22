@@ -22,7 +22,6 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 // SonarView Docker container serves web UI on port 7077
 // See: https://docs.ceruleansonar.com/c/sonarview/installation/docker
 const SONARVIEW_URL = 'http://localhost:7077';
-const SONARVIEW_STATUS_ENDPOINT = 'http://localhost:7077/status';
 
 type ConnectionStatus = 'idle' | 'checking' | 'connected' | 'error';
 
@@ -33,7 +32,11 @@ type ConnectionStatus = 'idle' | 'checking' | 'connected' | 'error';
  * The Docker version exposes a web UI at localhost:7077 that can be
  * opened in a new tab or embedded in an iframe.
  *
- * Setup: docker run -d --net=host --name=sonarview nicknothom/sonarview:latest
+ * macOS/Windows Setup:
+ * docker run -d -v ~/SonarView:/userdata -p 7077:7077 --name=sonarview --restart=unless-stopped nicknothom/sonarview:1.13.15
+ *
+ * Linux Setup:
+ * docker run -d -v /usr/SonarView:/userdata --net=host --name=sonarview --restart=unless-stopped nicknothom/sonarview:1.13.15
  */
 export const SonarPlaceholder = () => {
   const [status, setStatus] = useState<ConnectionStatus>('idle');
@@ -44,15 +47,15 @@ export const SonarPlaceholder = () => {
     severity: 'success' | 'error' | 'warning' | 'info';
   }>({ open: false, message: '', severity: 'info' });
 
-  // Check if SonarView Docker container is running via status endpoint
+  // Check if SonarView Docker container is running
   const checkConnection = useCallback(async (): Promise<boolean> => {
     setStatus('checking');
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      const response = await fetch(SONARVIEW_STATUS_ENDPOINT, {
-        method: 'GET',
+      const response = await fetch(SONARVIEW_URL, {
+        method: 'HEAD',
         signal: controller.signal,
       });
 
@@ -66,24 +69,8 @@ export const SonarPlaceholder = () => {
         return false;
       }
     } catch {
-      // Fallback: try no-cors HEAD request
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-        await fetch(SONARVIEW_URL, {
-          method: 'HEAD',
-          mode: 'no-cors',
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-        setStatus('connected');
-        return true;
-      } catch {
-        setStatus('error');
-        return false;
-      }
+      setStatus('error');
+      return false;
     }
   }, []);
 
@@ -270,7 +257,9 @@ export const SonarPlaceholder = () => {
                   wordBreak: 'break-all',
                 }}
               >
-                docker run -d --net=host --name=sonarview nicknothom/sonarview:latest
+                try docker run -d --net=host --name=sonarview nicknothom/sonarview:latest or docker
+                run -d -v ~/SonarView:/userdata -p 7077:7077 --name=sonarview
+                --restart=unless-stopped nicknothom/sonarview:1.13.15
               </Box>
             </Typography>
           </Box>
