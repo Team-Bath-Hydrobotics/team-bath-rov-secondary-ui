@@ -13,7 +13,8 @@
 
 // Camera types
 export type { CameraConfig, CameraState, CameraStateMap } from './camera.types';
-
+export type { ThreatLevelType, PlatformData, IcebergCalculationData } from './platform.type';
+export { ThreatLevel } from './platform.type';
 // Telemetry types
 export type {
   TelemetryFieldId,
@@ -21,6 +22,6 @@ export type {
   TelemetryFieldMeta,
   TelemetrySelectionState,
 } from './telemetry.types';
-
+export type { DetectionResult } from './detection.types';
 // CoPilot page types
-export type { CoPilotState, CoPilotContextValue, CoPilotAction } from './copilot.types';
+export type { AppState, AppStateContextValue, AppStateAction, TelemetryPayload } from './AppState';

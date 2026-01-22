@@ -11,7 +11,7 @@
  */
 export interface CameraConfig {
   /** Unique identifier for the camera (e.g., 'front', 'back', 'camera-1') */
-  id: string;
+  id: number;
 
   /** Human-readable name displayed in the UI */
   name: string;
@@ -29,7 +29,7 @@ export interface CameraConfig {
  */
 export interface CameraState {
   /** Matches the id from CameraConfig */
-  id: string;
+  id: number;
 
   /** Is this camera currently visible in the grid? */
   enabled: boolean;

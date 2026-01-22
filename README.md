@@ -33,23 +33,81 @@ npm install
 npm run dev
 ```
 
+To connect to the telemetry broker add the following in an env file at the project root
+```
+VITE_MQTT_HOST=<WS host name>
+VITE_MQTT_PORT=<Web socket port number>
+VITE_MQTT_USERNAME=<Find in teams>
+VITE_MQTT_PASSWORD=<Find in teams>
+```
+
 # Folder Structure
 ```
 ui/
+├─  app/
+├─  assets/
 ├─ components/
-├─ features/
+├─ context/
+├─ hooks/
 ├─ layouts/
 ├─ pages/
-├─ hooks/
-├─ context/
-├─ theme/
 ├─ providers/
+├─ reducers/
+├─ theme/
+├─ types/
+├─ utils/
 ```
 Most folders expose an index.ts to support clean, centralized imports.
 
 You can group similar items in a single folder and rexport them in a single index.ts for things that don't need an entire folder
 
 # Architectural Responsibilities
+
+### app/
+
+Application entry point and root configuration
+
+Responsibilities:
+- Root component setup
+- Router configuration
+- Global provider composition
+- App-level initialization
+
+Rules:
+- Keep minimal - delegate to providers/
+- No business logic
+- No feature code
+
+Examples:
+- `App.tsx` - Root component
+- `main.tsx` - Vite entry point
+- `router.tsx` - Route definitions
+
+
+### assets/
+
+Static files and media
+
+Responsibilities:
+- Images, icons, fonts
+- SVG files
+- Static JSON data
+- Public assets
+
+Rules:
+- No executable code
+- Organize by type or feature
+
+Examples:
+```
+assets/
+├── images/
+│   ├── logo.svg
+│   └── background.png
+├── fonts/
+└── icons/
+```
+
 ### components/
 
 Reusable, presentational components only
@@ -65,47 +123,6 @@ Examples:
 - Cards
 - Status indicators
 
-### features/
-
-Page-level or domain-specific logic
-- Can compose multiple components
-- Owns feature-specific hooks, context, and types
-- Business rules live here
-- No shared logic between features
-
-Shared logic belongs in hooks/, components/, or context/
-
-### pages/
-
-Route-level entry points only
-Responsible for:
-- Wiring features together
-- Handling routing concerns
-- No business logic
-- No shared logic
-
-### layouts/
-
-Structural UI wrappers (navigation, headers, footers, sidebars):
-- No domain logic
-- Can accept children
-- Can consume context but should not define it
-
-Use layouts when:
-- Multiple pages share the same structure
-- UI framing is consistent across routes
-
-### hooks/
-
-Custom React hooks only
-Used to encapsulate reusable logic
-
-Rules:
-- Prefix with use
-- No conditional hook calls
-- No side effects outside useEffect
-- Hooks may call APIs (preferred over components)
-
 ### context/
 
 React Context definitions only
@@ -120,22 +137,187 @@ Rules:
 - Never consume context directly via useContext
 - Always use the exported hook
 
-### providers/
+### hooks/
 
-Application-level wiring
-Composes and orders context providers
-Used at the root of the app
+Custom React hooks only
+Used to encapsulate reusable logic
 
 Rules:
-- Providers should be thin
+- Prefix with use
+- No conditional hook calls
+- No side effects outside useEffect
+- Hooks may call APIs (preferred over components)
+
+### layouts/
+
+Structural UI wrappers (navigation, headers, footers, sidebars):
+- No domain logic
+- Can accept children
+- Can consume context but should not define it
+
+Use layouts when:
+- Multiple pages share the same structure
+- UI framing is consistent across routes
+
+### pages/
+
+Route-level entry points only
+Responsible for:
+- Wiring features together
+- Handling routing concerns
 - No business logic
-- No UI rendering
+- No shared logic
+
+### providers/
+
+React Context providers with business logic
+
+Responsibilities:
+- Compose useReducer with context
+- Provide memoized values and callbacks
+- Handle side effects via useEffect
+- Expose typed hooks for consumption
+
+Rules:
+- One provider per context
+- Export custom hook (e.g., `useAppState()`)
+- Keep render logic minimal
+- Memoize values and callbacks with useMemo/useCallback
+
+Example:
+```typescript
+export const AppStateProvider = ({ children }: Props) => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  
+  const value = useMemo(
+    () => ({ state, dispatch }),
+    [state]
+  );
+  
+  return (
+    <AppStateContext.Provider value={value}>
+      {children}
+    </AppStateContext.Provider>
+  );
+};
+```
+
+### reducers/
+
+State management logic using the reducer pattern
+
+Responsibilities:
+- Pure reducer functions
+- Action type definitions
+- State transformation logic
+- Initial state definitions
+
+Rules:
+- Must be pure functions
+- No side effects
+- No async operations
+- Thoroughly typed with TypeScript
+- One reducer per domain
+
+Example:
+```typescript
+type AppStateAction =
+  | { type: 'TOGGLE_CAMERA'; cameraId: number }
+  | { type: 'SET_RECORDING'; cameraId: number; isRecording: boolean };
+
+export const AppStateReducer = (
+  state: AppState,
+  action: AppStateAction
+): AppState => {
+  switch (action.type) {
+    case 'TOGGLE_CAMERA':
+      // Pure state transformation
+      return { ...state, /* changes */ };
+    default:
+      return state;
+  }
+};
+```
 
 ### theme/
 
 Global theming configuration
 - MUI theme, tokens, overrides, typography
 - No component logic
+
+### types/
+
+TypeScript type definitions and interfaces
+
+Responsibilities:
+- Shared type definitions
+- Constants with types
+- API response types
+- Domain models
+
+Rules:
+- No runtime code (except const enums/constants)
+
+Examples:
+```typescript
+// types/telemetry.ts
+export interface TelemetryField {
+  id: string;
+  label: string;
+  unit: string;
+  category: TelemetryCategory;
+}
+
+export type TelemetryCategory = 
+  | 'attitude' 
+  | 'angular' 
+  | 'linear';
+
+// types/constants/cameras.ts
+export const DEFAULT_CAMERAS: CameraConfig[] = [
+  { id: 1, name: 'Front Camera', streamId: 'camera-front' }
+];
+```
+
+### utils/
+
+Pure utility functions and helpers
+
+Responsibilities:
+- Reusable helper functions
+- Data transformation
+- Formatting logic
+- Validation functions
+
+Rules:
+- Must be pure functions
+- No side effects
+- No React hooks
+- No state management
+- Framework-agnostic
+- Well-tested
+
+Examples:
+```typescript
+// utils/formatters.ts
+export const formatTimestamp = (ms: number): string => {
+  return new Date(ms).toISOString();
+};
+
+export const clamp = (value: number, min: number, max: number): number => {
+  return Math.min(Math.max(value, min), max);
+};
+
+// utils/validators.ts
+export const isValidCameraId = (id: unknown): id is number => {
+  return typeof id === 'number' && id > 0;
+};
+```
+
+When to use utils/:
+- Logic is needed in multiple components
+- Function has no dependencies on React/state
+- Pure computation or transformation
 
 # Component Standards
 - One component per file
