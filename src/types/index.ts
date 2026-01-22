@@ -25,3 +25,6 @@ export type {
 
 // CoPilot page types
 export type { AppState, AppStateContextValue, AppStateAction, TelemetryPayload } from './AppState';
+
+// eDNA Calculator types
+export type { SpeciesEntry, EdnaCalculatorState } from './edna.types';
