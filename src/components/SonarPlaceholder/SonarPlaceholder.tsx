@@ -66,6 +66,7 @@ export const SonarPlaceholder = () => {
         return true;
       } else {
         setStatus('error');
+        console.log(response);
         return false;
       }
     } catch {
@@ -80,8 +81,7 @@ export const SonarPlaceholder = () => {
       checkConnection();
     }, 100);
     return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [checkConnection]);
 
   // Open SonarView in new browser tab
   const handleOpenNewTab = useCallback(async () => {
