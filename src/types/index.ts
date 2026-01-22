@@ -22,6 +22,9 @@ export type {
   TelemetryFieldMeta,
   TelemetrySelectionState,
 } from './telemetry.types';
-
+export type { DetectionResult } from './detection.types';
 // CoPilot page types
 export type { AppState, AppStateContextValue, AppStateAction, TelemetryPayload } from './AppState';
+
+// eDNA Calculator types
+export type { SpeciesEntry, EdnaCalculatorState } from './edna.types';
