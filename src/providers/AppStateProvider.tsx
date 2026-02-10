@@ -100,6 +100,16 @@ export const AppStateProvider = ({
     dispatch({ type: 'SET_CAMERA_RECORDING', cameraId, isRecording });
   }, []);
 
+  const updateCameraStatus = useCallback(
+    (
+      cameraId: number,
+      connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected',
+    ) => {
+      dispatch({ type: 'UPDATE_CAMERA_STATUS', cameraId, connectionStatus });
+    },
+    [],
+  );
+
   const toggleTelemetry = useCallback(
     (fieldId: TelemetryFieldId, maxApplies: boolean, isCopilot: boolean): boolean => {
       const selectedArray = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
@@ -118,6 +128,11 @@ export const AppStateProvider = ({
   const setSidebarOpen = useCallback((open: boolean) => {
     console.log('[AppStateProvider] Set sidebar open:', open);
     dispatch({ type: 'SET_SIDEBAR_OPEN', open });
+  }, []);
+
+  const updateCameraState = useCallback((configs: CameraConfig[]) => {
+    console.log(`[AppStateProvider] Initialising camera configs:`, configs);
+    dispatch({ type: 'INITIALIZE_CAMERAS', configs });
   }, []);
 
   const canSelectMoreTelemetry = useCallback(
@@ -145,22 +160,26 @@ export const AppStateProvider = ({
       cameraConfigs: stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
+      updateCameraStatus,
       toggleTelemetry,
       setSidebarOpen,
       canSelectMoreTelemetry,
       updateTelemetry,
       updateIcebergCalculationData,
+      updateCameraState,
     }),
     [
       state,
       stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
+      updateCameraStatus,
       toggleTelemetry,
       setSidebarOpen,
       canSelectMoreTelemetry,
       updateTelemetry,
       updateIcebergCalculationData,
+      updateCameraState,
     ],
   );
 

@@ -3,6 +3,7 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import { RecordingStatus } from '../Status';
 import React, { useEffect, useRef } from 'react';
 import { useVideoStreamContext } from '../../context/VideoStreamContext';
+import { useAppStateContext } from '../../context';
 
 interface CameraTileProps {
   cameraId: number;
@@ -18,16 +19,16 @@ interface CameraTileProps {
 export const CameraTile = React.memo(
   ({ cameraId, name, enabled, isRecording }: CameraTileProps) => {
     const { registerCamera } = useVideoStreamContext();
+    const { state } = useAppStateContext();
+    const cameraStatus = state.cameras[cameraId]?.connectionStatus || 'disconnected';
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
       if (enabled && canvasRef.current) {
-        console.log(`CameraTile: Registering camera ${cameraId}`);
         registerCamera(cameraId, canvasRef.current);
       }
 
       return () => {
-        console.log(`CameraTile: Unregistering camera ${cameraId}`);
         registerCamera(cameraId, null);
       };
     }, [cameraId, enabled, registerCamera]);
@@ -46,6 +47,27 @@ export const CameraTile = React.memo(
           transition: 'opacity 0.3s, filter 0.3s',
         }}
       >
+        {}
+        {cameraStatus === 'failed' && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(255, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              zIndex: 1,
+            }}
+          >
+            Connection Failed
+          </Box>
+        )}
         {enabled ? (
           <canvas
             ref={canvasRef}

@@ -80,6 +80,7 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
           id: config.id,
           enabled: config.defaultEnabled,
           isRecording: false,
+          connectionStatus: 'disconnected',
         };
       });
 
@@ -95,6 +96,21 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
         telemetry: {
           ...state.telemetry,
           ...action.payload,
+        },
+      };
+    }
+    case 'UPDATE_CAMERA_STATUS': {
+      const camera = state.cameras[action.cameraId];
+      if (!camera) return state;
+
+      return {
+        ...state,
+        cameras: {
+          ...state.cameras,
+          [action.cameraId]: {
+            ...camera,
+            connectionStatus: action.connectionStatus,
+          },
         },
       };
     }

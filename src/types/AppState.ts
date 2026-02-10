@@ -48,6 +48,12 @@ export interface AppStateContextValue {
   /** Set whether a camera is recording */
   setCameraRecording: (cameraId: number, isRecording: boolean) => void;
 
+  /** Update camera connection status */
+  updateCameraStatus: (
+    cameraId: number,
+    connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected',
+  ) => void;
+
   /**
    * Toggle a telemetry field selection.
    * Returns false if trying to select when already at max (3).
@@ -79,6 +85,11 @@ export interface AppStateContextValue {
 export type AppStateAction =
   | { type: 'TOGGLE_CAMERA'; cameraId: number }
   | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
+  | {
+      type: 'UPDATE_CAMERA_STATUS';
+      cameraId: number;
+      connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected';
+    }
   | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] }

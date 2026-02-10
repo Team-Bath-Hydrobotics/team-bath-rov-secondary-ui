@@ -1,4 +1,4 @@
-declare module 'jsmpeg' {
+declare module '@cycjimmy/jsmpeg-player' {
   interface PlayerOptions {
     canvas?: HTMLCanvasElement;
     autoplay?: boolean;
@@ -13,10 +13,10 @@ declare module 'jsmpeg' {
 
     onVideoDecode?: (decoder: unknown, time: number) => void;
     onAudioDecode?: (decoder: unknown, time: number) => void;
-    onPlay?: (player: unknown) => void;
-    onPause?: (player: unknown) => void;
-    onEnded?: (player: unknown) => void;
-    onStalled?: (player: unknown) => void;
+    onPlay?: (player: Player) => void;
+    onPause?: (player: Player) => void;
+    onEnded?: (player: Player) => void;
+    onStalled?: (player: Player) => void;
     onSourceEstablished?: (source: unknown) => void;
     onSourceCompleted?: (source: unknown) => void;
   }
@@ -27,12 +27,18 @@ declare module 'jsmpeg' {
     pause(): void;
     stop(): void;
     volume: number;
+    source?: {
+      socket?: WebSocket;
+      close(): void;
+    };
   }
 
-  interface PlayerConstructor {
-    new (url: string, options?: PlayerOptions): Player;
+  interface JSMpegNamespace {
+    Player: {
+      new (url: string, options?: PlayerOptions): Player;
+    };
   }
 
-  const JSMpeg: PlayerConstructor;
+  const JSMpeg: JSMpegNamespace;
   export default JSMpeg;
 }
