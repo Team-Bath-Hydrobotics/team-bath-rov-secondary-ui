@@ -81,6 +81,11 @@ export const AppStateProvider = ({
         ] as PlatformData[],
         imageFile: null,
       },
+      settings: {
+        networkSettings: {
+          wsBaseUrl: 'ws://localhost:50000',
+        },
+      },
     };
   });
 

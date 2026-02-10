@@ -13,6 +13,7 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
   const players = useRef(new Map<number, any>());
   const isInitializing = useRef(new Set<number>());
   const { state } = useAppStateContext();
+  const isMounted = useRef(true);
 
   const wsBaseUrlRef = useRef(state.settings.networkSettings.wsBaseUrl);
 
@@ -21,12 +22,25 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
   }, [state.settings.networkSettings.wsBaseUrl]);
 
   const registerCamera = useCallback((cameraId: number, canvas: HTMLCanvasElement | null) => {
+    console.log('registerCamera called with:', { cameraId, canvas, isMounted: isMounted.current });
+
     if (!canvas) {
       // Cleanup player
       const player = players.current.get(cameraId);
+      if (canvasRefs.current.get(cameraId) == null) {
+        console.log(`Camera ${cameraId} canvas already unregistered`);
+        return;
+      }
+      console.log(player);
       if (player && typeof player.destroy === 'function') {
         try {
-          player.destroy();
+          if (player.source && typeof player.source.close === 'function') {
+            player.destroy();
+          } else {
+            console.warn(
+              `Player for camera ${cameraId} has no valid source to close, skipping destroy.`,
+            );
+          }
         } catch (error) {
           console.warn(`Error destroying player for camera ${cameraId}:`, error);
         }
@@ -35,6 +49,10 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
 
       canvasRefs.current.delete(cameraId);
       isInitializing.current.delete(cameraId);
+      return;
+    }
+    if (!isMounted.current) {
+      console.log('Provider is unmounted, skipping registration');
       return;
     }
 
@@ -84,6 +102,14 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
         },
       });
 
+      // Debug: Log every message received by the WebSocket
+      if (player.source && player.source.socket) {
+        player.source.socket.addEventListener('message', function (event) {
+          const size = event.data?.byteLength || event.data?.length || 0;
+          console.log(`Camera ${cameraId} received message of size:`, size);
+        });
+      }
+
       players.current.set(cameraId, player);
       console.log(`Camera ${cameraId} player created`);
 
@@ -97,23 +123,32 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
   }, []);
 
   useEffect(() => {
+    isMounted.current = true;
     const currentPlayers = players.current;
     const currentCanvasRefs = canvasRefs.current;
 
     return () => {
       console.log('VideoStreamProvider unmounting');
-      currentPlayers.forEach((player, cameraId) => {
-        console.log(`Destroying player for camera ${cameraId}`);
-        if (player && typeof player.destroy === 'function') {
-          try {
-            player.destroy();
-          } catch (error) {
-            console.warn(`Error during cleanup for camera ${cameraId}:`, error);
-          }
+      isMounted.current = false;
+
+      // Only cleanup if actually unmounting (not just re-rendering)
+      // Delay to avoid Strict Mode double-unmount cleanup
+      setTimeout(() => {
+        if (!isMounted.current) {
+          currentPlayers.forEach((player, cameraId) => {
+            console.log(`Destroying player for camera ${cameraId}`);
+            if (player && typeof player.destroy === 'function') {
+              try {
+                player.destroy();
+              } catch (error) {
+                console.warn(`Error during cleanup for camera ${cameraId}:`, error);
+              }
+            }
+          });
+          currentPlayers.clear();
+          currentCanvasRefs.clear();
         }
-      });
-      currentPlayers.clear();
-      currentCanvasRefs.clear();
+      }, 0);
     };
   }, []);
 

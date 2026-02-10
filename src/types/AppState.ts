@@ -2,7 +2,7 @@ import type { CameraConfig, CameraStateMap } from './camera.types';
 import type { TelemetryDataPoint } from './constants';
 import type { TelemetryFieldId } from './telemetry.types';
 import type { IcebergCalculationData } from './platform.type';
-
+import type { AppSettings } from './appsettings.types';
 export type TelemetryPayload = Record<TelemetryFieldId, TelemetryDataPoint>;
 
 export interface AppState {
@@ -23,6 +23,8 @@ export interface AppState {
 
   /** Iceberg platform data for calculations */
   icebergCalculationData: IcebergCalculationData;
+
+  settings: AppSettings;
 }
 
 /**

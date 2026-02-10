@@ -6,16 +6,19 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 import { SidebarProvider } from '../providers/SidebarProvider';
 import { AppStateProvider } from '../providers/AppStateProvider';
 import { MqttProvider } from '../providers/MqttProvider.tsx';
+import { VideoStreamProvider } from '../providers/VideoStreamProvider.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppStateProvider>
       <MqttProvider>
-        <ThemeProvider>
-          <SidebarProvider>
-            <App />
-          </SidebarProvider>
-        </ThemeProvider>
+        <VideoStreamProvider>
+          <ThemeProvider>
+            <SidebarProvider>
+              <App />
+            </SidebarProvider>
+          </ThemeProvider>
+        </VideoStreamProvider>
       </MqttProvider>
     </AppStateProvider>
   </StrictMode>,
