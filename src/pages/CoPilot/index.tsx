@@ -54,6 +54,8 @@ const CoPilotContent = () => {
           label={field.label}
           selected={true}
           data={telemetry[field.id]}
+          isLive={true}
+          disconnectedMessage={'Check Broker Connection'}
         />
       )),
     [selectedTelemetryFields, telemetry],

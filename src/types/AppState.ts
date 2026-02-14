@@ -3,6 +3,7 @@ import type { TelemetryDataPoint } from './constants';
 import type { TelemetryFieldId } from './telemetry.types';
 import type { IcebergCalculationData } from './platform.type';
 import type { AppSettings } from './appsettings.types';
+import type { FloatFile } from './float.types';
 export type TelemetryPayload = Record<TelemetryFieldId, TelemetryDataPoint>;
 
 export interface AppState {
@@ -23,6 +24,9 @@ export interface AppState {
 
   /** Iceberg platform data for calculations */
   icebergCalculationData: IcebergCalculationData;
+
+  //** Float File */
+  floatFile: FloatFile;
 
   settings: AppSettings;
 }
@@ -71,6 +75,9 @@ export interface AppStateContextValue {
 
   /** Update iceberg input data for calculations*/
   updateIcebergCalculationData: (data: IcebergCalculationData) => void;
+
+  /** Update float csv file */
+  updateFloatFile: (file: FloatFile) => void;
 }
 
 /**
@@ -94,4 +101,5 @@ export type AppStateAction =
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] }
   | { type: 'UPDATE_TELEMETRY'; payload: TelemetryPayload }
-  | { type: 'UPDATE_ICEBERG_DATA'; icebergCalculationData: IcebergCalculationData };
+  | { type: 'UPDATE_ICEBERG_DATA'; icebergCalculationData: IcebergCalculationData }
+  | { type: 'UPDATE_FLOAT_FILE'; file: FloatFile };

@@ -7,6 +7,7 @@ import { IcebergThreat } from '../pages/IcebergThreat';
 import { Photogrammetry } from '../pages/Photogrammetry';
 import { CoPilot } from '../pages/CoPilot';
 import { EDna } from '../pages/EDna';
+import { Float } from '../pages/Float';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="edna" element={<EDna />} />
           <Route path="iceberg-threat" element={<IcebergThreat />} />
           <Route path="photogrammetry" element={<Photogrammetry />} />
+          <Route path="float" element={<Float />} />
         </Route>
       </Routes>
     </BrowserRouter>

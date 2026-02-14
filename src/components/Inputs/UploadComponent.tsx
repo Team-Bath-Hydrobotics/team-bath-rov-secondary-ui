@@ -6,8 +6,14 @@ interface UploadComponentProps {
   buttonText: string;
   displayText: string;
   onChange: (newValue: File[]) => void;
+  accept?: string;
 }
-export const UploadComponent = ({ buttonText, displayText, onChange }: UploadComponentProps) => {
+export const UploadComponent = ({
+  buttonText,
+  displayText,
+  onChange,
+  accept,
+}: UploadComponentProps) => {
   return (
     <Box>
       <HorizontalPageContentLayout>
@@ -17,6 +23,7 @@ export const UploadComponent = ({ buttonText, displayText, onChange }: UploadCom
           <input
             type="file"
             multiple
+            accept={accept ?? undefined}
             hidden
             onChange={(e) => onChange(e.target.files ? Array.from(e.target.files) : [])}
           />
