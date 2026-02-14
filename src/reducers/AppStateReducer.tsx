@@ -123,6 +123,12 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
         },
       };
     }
+    case 'UPDATE_FLOAT_FILE': {
+      return {
+        ...state,
+        floatFile: action.file,
+      };
+    }
     default:
       return state;
   }

@@ -4,6 +4,7 @@ import { AppStateContext } from '../context/AppStateContext';
 import {
   type AppStateContextValue,
   type CameraConfig,
+  type FloatFile,
   type IcebergCalculationData,
   type PlatformData,
   type TelemetryFieldId,
@@ -81,6 +82,9 @@ export const AppStateProvider = ({
         ] as PlatformData[],
         imageFile: null,
       },
+      floatFile: {
+        csvFile: null,
+      },
       settings: {
         networkSettings: {
           wsBaseUrl: 'ws://localhost:50000',
@@ -154,6 +158,10 @@ export const AppStateProvider = ({
     dispatch({ type: 'UPDATE_ICEBERG_DATA', icebergCalculationData: data });
   }, []);
 
+  const updateFloatFile = useCallback((data: FloatFile) => {
+    dispatch({ type: 'UPDATE_FLOAT_FILE', file: data });
+  }, []);
+
   const contextValue = useMemo<AppStateContextValue>(
     () => ({
       state,
@@ -167,6 +175,7 @@ export const AppStateProvider = ({
       updateTelemetry,
       updateIcebergCalculationData,
       updateCameraState,
+      updateFloatFile,
     }),
     [
       state,
@@ -180,6 +189,7 @@ export const AppStateProvider = ({
       updateTelemetry,
       updateIcebergCalculationData,
       updateCameraState,
+      updateFloatFile,
     ],
   );
 
