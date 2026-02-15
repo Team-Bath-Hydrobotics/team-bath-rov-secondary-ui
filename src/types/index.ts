@@ -28,3 +28,17 @@ export type { AppState, AppStateContextValue, AppStateAction, TelemetryPayload }
 
 // eDNA Calculator types
 export type { SpeciesEntry, EdnaCalculatorState } from './edna.types';
+
+// Photogrammetry types
+export type {
+  ReconstructionStatus,
+  PhotogrammetryState,
+  JobStatus,
+  JobResponse,
+  UploadResponse,
+  RunResponse,
+  ScaleResponse,
+  ManualCADResponse,
+} from './photogrammetry.types';
+export type { ApiError } from './photogrammetry.types';
+export { createApiError } from './photogrammetry.types';

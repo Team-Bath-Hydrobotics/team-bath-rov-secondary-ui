@@ -1,0 +1,15 @@
+[project]
+name = "photogrammetry-backend"
+version = "1.0.0"
+description = "Photogrammetry backend for Team Bath ROV — MATE 2026 coral garden 3D modeling"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    "pydantic-settings",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
