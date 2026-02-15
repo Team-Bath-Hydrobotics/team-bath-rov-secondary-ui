@@ -38,6 +38,7 @@ async def upload_images(
         content = await f.read()
         total_size += len(content)
         file_path = upload_dir / f.filename
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_bytes(content)
 
     job_manager.update_job(job_id, status=JobStatus.PENDING)
