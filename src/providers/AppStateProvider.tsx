@@ -4,6 +4,7 @@ import { AppStateContext } from '../context/AppStateContext';
 import {
   type AppStateContextValue,
   type CameraConfig,
+  type FloatFile,
   type IcebergCalculationData,
   type PlatformData,
   type TelemetryFieldId,
@@ -81,6 +82,14 @@ export const AppStateProvider = ({
         ] as PlatformData[],
         imageFile: null,
       },
+      floatFile: {
+        csvFile: null,
+      },
+      settings: {
+        networkSettings: {
+          wsBaseUrl: 'ws://localhost:50000',
+        },
+      },
     };
   });
 
@@ -94,6 +103,16 @@ export const AppStateProvider = ({
     console.log(`[AppStateProvider] Set camera recording: ${cameraId} = ${isRecording}`);
     dispatch({ type: 'SET_CAMERA_RECORDING', cameraId, isRecording });
   }, []);
+
+  const updateCameraStatus = useCallback(
+    (
+      cameraId: number,
+      connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected',
+    ) => {
+      dispatch({ type: 'UPDATE_CAMERA_STATUS', cameraId, connectionStatus });
+    },
+    [],
+  );
 
   const toggleTelemetry = useCallback(
     (fieldId: TelemetryFieldId, maxApplies: boolean, isCopilot: boolean): boolean => {
@@ -115,6 +134,11 @@ export const AppStateProvider = ({
     dispatch({ type: 'SET_SIDEBAR_OPEN', open });
   }, []);
 
+  const updateCameraState = useCallback((configs: CameraConfig[]) => {
+    console.log(`[AppStateProvider] Initialising camera configs:`, configs);
+    dispatch({ type: 'INITIALIZE_CAMERAS', configs });
+  }, []);
+
   const canSelectMoreTelemetry = useCallback(
     (isCopilot: boolean) => {
       const selectedArray = isCopilot ? state.selectedTelemetryCopilot : state.selectedTelemetry;
@@ -134,28 +158,38 @@ export const AppStateProvider = ({
     dispatch({ type: 'UPDATE_ICEBERG_DATA', icebergCalculationData: data });
   }, []);
 
+  const updateFloatFile = useCallback((data: FloatFile) => {
+    dispatch({ type: 'UPDATE_FLOAT_FILE', file: data });
+  }, []);
+
   const contextValue = useMemo<AppStateContextValue>(
     () => ({
       state,
       cameraConfigs: stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
+      updateCameraStatus,
       toggleTelemetry,
       setSidebarOpen,
       canSelectMoreTelemetry,
       updateTelemetry,
       updateIcebergCalculationData,
+      updateCameraState,
+      updateFloatFile,
     }),
     [
       state,
       stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
+      updateCameraStatus,
       toggleTelemetry,
       setSidebarOpen,
       canSelectMoreTelemetry,
       updateTelemetry,
       updateIcebergCalculationData,
+      updateCameraState,
+      updateFloatFile,
     ],
   );
 

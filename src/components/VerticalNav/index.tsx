@@ -6,6 +6,7 @@ import BiotechIcon from '@mui/icons-material/Biotech';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+import WaterIcon from '@mui/icons-material/Water';
 import type { ReactElement } from 'react';
 
 interface VerticalNavProps {
@@ -20,6 +21,7 @@ export function VerticalNav({ collapsed }: VerticalNavProps) {
     { key: 'edna', label: 'EDna', icon: 'edna' },
     { key: 'iceberg-threat', label: 'Iceberg Threat', icon: 'iceberg-threat' },
     { key: 'photogrammetry', label: 'Photogrammetry', icon: 'photogrammetry' },
+    { key: 'float', label: 'Float', icon: 'float' },
   ];
   const iconMap: Record<string, ReactElement> = {
     pilot: <SportsEsportsIcon />,
@@ -28,6 +30,7 @@ export function VerticalNav({ collapsed }: VerticalNavProps) {
     edna: <BiotechIcon />,
     'iceberg-threat': <AcUnitIcon />,
     photogrammetry: <CameraAltIcon />,
+    float: <WaterIcon />,
   };
 
   return (

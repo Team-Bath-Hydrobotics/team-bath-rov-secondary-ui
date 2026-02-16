@@ -8,67 +8,97 @@ interface TelemetryTileProps {
   fieldId: string;
   label: string;
   selected: boolean;
-  data?: TelemetryDataPoint;
+  disconnectedMessage: string;
+  data?: TelemetryDataPoint | TelemetryDataPoint[];
+  isLive?: boolean;
 }
 
-export const TelemetryTile = React.memo(({ label, selected, data }: TelemetryTileProps) => {
-  const chartRef = useRef<LineChartHandle>(null);
-  const prevValue = useRef<TelemetryDataPoint | null>(null);
+export const TelemetryTile = React.memo(
+  ({ label, selected, disconnectedMessage, data, isLive = true }: TelemetryTileProps) => {
+    const chartRef = useRef<LineChartHandle>(null);
+    const prevValue = useRef<TelemetryDataPoint | null>(null);
 
-  useEffect(() => {
-    if (data == null) return;
+    useEffect(() => {
+      if (!data) return;
 
-    const numericValue = typeof data.value === 'number' ? data.value : parseFloat(data.value);
-    if (isNaN(numericValue)) {
-      console.warn(`[TelemetryTile] Non-numeric telemetry value received: ${data.value}`);
-      return;
-    }
+      if (isLive) {
+        const point = Array.isArray(data) ? data[data.length - 1] : data;
+        const numericValue =
+          typeof point.value === 'number' ? point.value : parseFloat(point.value as string);
+        if (isNaN(numericValue)) {
+          console.warn(`[TelemetryTile] Non-numeric telemetry value received: ${point.value}`);
+          return;
+        }
 
-    // Avoid duplicate points if the value hasn't changed
-    if (
-      prevValue.current?.value !== numericValue &&
-      prevValue.current?.timestamp !== data.timestamp
-    ) {
-      chartRef.current?.appendPoint(data.timestamp, [numericValue]);
-      prevValue.current = data;
-    }
-  }, [data]);
+        if (
+          prevValue.current?.value !== numericValue ||
+          prevValue.current?.timestamp !== point.timestamp
+        ) {
+          chartRef.current?.appendPoint(point.timestamp, [numericValue]);
+          prevValue.current = point;
+        }
+      } else {
+        const pointsArray = Array.isArray(data) ? data : [data];
 
-  return (
-    <Paper
-      elevation={2}
-      sx={{
-        position: 'relative',
-        minWidth: 150,
-        minHeight: 250,
-        aspectRatio: '16/9',
-        borderRadius: '8px',
-      }}
-    >
-      <Box
+        const timestamps: number[] = [];
+        const yValues: number[] = [];
+
+        pointsArray.forEach((point) => {
+          const numericValue =
+            typeof point.value === 'number' ? point.value : parseFloat(point.value as string);
+
+          if (!isNaN(numericValue)) {
+            timestamps.push(point.timestamp);
+            yValues.push(numericValue);
+          }
+        });
+
+        chartRef.current?.setData(timestamps, [yValues]);
+      }
+    }, [data, isLive]);
+
+    return (
+      <Paper
+        elevation={2}
         sx={{
+          position: 'relative',
           width: '100%',
-          height: '100%',
-          backgroundColor: 'primary.dark',
-          minWidth: 150,
+          height: 0,
+          paddingTop: '56.25%', // 16:9 aspect ratio
           minHeight: 250,
+          maxHeight: 500,
           borderRadius: '8px',
+          overflow: 'hidden', // important to clip uPlot
         }}
       >
-        <LineChart
-          ref={chartRef}
-          initialData={[[0], [0]]}
-          labels={['Time', 'Value 1']}
-          units={['s', data?.unit ?? 'N/A']}
-          title={label}
-        />
-      </Box>
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            backgroundColor: 'primary.dark',
+          }}
+        >
+          <LineChart
+            ref={chartRef}
+            initialData={undefined}
+            labels={['Time', label]}
+            units={['s', Array.isArray(data) ? (data[0]?.unit ?? 'N/A') : (data?.unit ?? 'N/A')]}
+            title={label}
+            disconnectedMessage={disconnectedMessage}
+            isLive={isLive}
+          />
+        </Box>
 
-      {!selected && (
-        <Typography variant="caption" color="grey.500" sx={{ mt: 1 }}>
-          Not selected
-        </Typography>
-      )}
-    </Paper>
-  );
-});
+        {!selected && (
+          <Typography variant="caption" color="grey.500" sx={{ mt: 1 }}>
+            Not selected
+          </Typography>
+        )}
+      </Paper>
+    );
+  },
+);

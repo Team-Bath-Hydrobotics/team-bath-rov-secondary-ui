@@ -36,19 +36,22 @@ export interface CameraState {
 
   /** Is this camera currently recording? */
   isRecording: boolean;
+
+  /** Connection status for the camera stream */
+  connectionStatus?: 'connecting' | 'connected' | 'failed' | 'disconnected';
 }
 
 /**
  * A map of camera IDs to their states.
  *
- * Record<string, CameraState> means:
- * - Keys are strings (camera IDs like 'front', 'back')
+ * Record<number, CameraState> means:
+ * - Keys are numbers (camera IDs)
  * - Values are CameraState objects
  *
  * Example:
  * {
- *   'front': { id: 'front', enabled: true, isRecording: false },
- *   'back': { id: 'back', enabled: false, isRecording: false }
+ *   1: { id: 1, enabled: true, isRecording: false, connectionStatus: 'connected' },
+ *   2: { id: 2, enabled: false, isRecording: false, connectionStatus: 'disconnected' }
  * }
  */
-export type CameraStateMap = Record<string, CameraState>;
+export type CameraStateMap = Record<number, CameraState>;

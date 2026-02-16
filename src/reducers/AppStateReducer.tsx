@@ -80,6 +80,7 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
           id: config.id,
           enabled: config.defaultEnabled,
           isRecording: false,
+          connectionStatus: 'disconnected',
         };
       });
 
@@ -98,6 +99,21 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
         },
       };
     }
+    case 'UPDATE_CAMERA_STATUS': {
+      const camera = state.cameras[action.cameraId];
+      if (!camera) return state;
+
+      return {
+        ...state,
+        cameras: {
+          ...state.cameras,
+          [action.cameraId]: {
+            ...camera,
+            connectionStatus: action.connectionStatus,
+          },
+        },
+      };
+    }
     case 'UPDATE_ICEBERG_DATA': {
       return {
         ...state,
@@ -105,6 +121,12 @@ export const AppStateReducer = (state: AppState, action: AppStateAction): AppSta
           ...state.icebergCalculationData,
           ...action.icebergCalculationData,
         },
+      };
+    }
+    case 'UPDATE_FLOAT_FILE': {
+      return {
+        ...state,
+        floatFile: action.file,
       };
     }
     default:
