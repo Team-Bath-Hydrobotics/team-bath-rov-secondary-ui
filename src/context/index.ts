@@ -1,4 +1,4 @@
 import { useAppStateContext } from './AppStateContext';
 import { useSidebarContext } from './SidebarContext';
-
-export { useAppStateContext, useSidebarContext };
+import { useDetectorContext, DetectorProvider } from './DetectorContext';
+export { useAppStateContext, useSidebarContext, useDetectorContext, DetectorProvider };
