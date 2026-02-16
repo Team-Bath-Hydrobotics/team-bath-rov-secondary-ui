@@ -16,7 +16,6 @@ export const FlexibleDataGrid = ({
   rowHeight = 74,
   onProcessRowUpdate,
 }: FlexibleDataGridProps) => {
-  console.log('FlexibleDataGrid data:', data);
   return (
     <Box
       sx={{

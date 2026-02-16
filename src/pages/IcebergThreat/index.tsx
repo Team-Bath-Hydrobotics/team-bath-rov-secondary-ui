@@ -93,7 +93,7 @@ const IcebergThreatContent = () => {
             onChange={(value) =>
               updateIcebergCalculationData({ icebergDepth, platformData, imageFile: value[0] })
             }
-            accept=".jpeg, .png, .heic, .JPG"
+            accept={'.JPG, .PNG, .JPEG, .jpeg, .png, .heic'}
           ></UploadComponent>
           <ImageTile
             imagefile={imageFile ?? new File([], 'Iceberg Map.png')}
