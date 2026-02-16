@@ -10,6 +10,7 @@ interface LineChartProps {
   units: string[];
   title: string;
   disconnectedMessage: string;
+  isLive?: boolean;
 }
 
 export interface LineChartHandle {
@@ -18,7 +19,7 @@ export interface LineChartHandle {
 }
 
 export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
-  ({ initialData, options, labels, units, title, disconnectedMessage }, ref) => {
+  ({ initialData, options, labels, units, title, disconnectedMessage, isLive = true }, ref) => {
     const theme = useTheme();
     const chartRef = useRef<HTMLDivElement>(null);
     const uplotRef = useRef<uPlot | null>(null);
@@ -40,7 +41,7 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
      * Reactive render state
      */
     const [hasData, setHasData] = useState(normalizedInitialData[0]?.length > 0);
-
+    const LABEL_HIDE_THRESHOLD = 400;
     /**
      * Observe container size
      */
@@ -71,11 +72,12 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
 
       const textColor = theme.palette.text.primary;
       const gridColor = theme.palette.divider;
+      const showLabels = dimensions.width >= LABEL_HIDE_THRESHOLD;
 
       const seriesConfig: uPlot.Series[] = [
         {},
         ...labels.slice(1).map((label, i) => ({
-          label,
+          label: showLabels ? label : '',
           stroke: i === 0 ? 'red' : 'blue',
           width: 2,
         })),
@@ -83,29 +85,39 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
 
       uplotRef.current = new uPlot(
         {
-          title: title || undefined,
+          title: hasData ? title : undefined,
           width: dimensions.width,
           height: dimensions.height,
-          legend: { show: false },
-          cursor: { show: false },
+          legend: { show: !isLive && hasData },
+          cursor: { show: !isLive && hasData },
           scales: {
             x: { time: hasData },
             y: { auto: true },
           },
           axes: [
             {
-              label: units[0] ? `${labels[0] ?? 'X'} (${units[0]})` : (labels[0] ?? 'X'),
+              label: showLabels
+                ? units[0]
+                  ? `${labels[0] ?? 'X'} (${units[0]})`
+                  : (labels[0] ?? 'X')
+                : '', // hide x-axis label
               labelSize: 12,
               stroke: textColor,
               labelFont: '10px Arial',
+              values: showLabels ? undefined : () => [],
               ticks: { stroke: textColor },
               grid: { show: true, stroke: gridColor },
             },
             {
-              label: units[1] ? `${labels[1] ?? 'Y'} (${units[1]})` : (labels[1] ?? 'Y'),
+              label: showLabels
+                ? units[1]
+                  ? `${labels[1] ?? 'Y'} (${units[1]})`
+                  : (labels[1] ?? 'Y')
+                : '',
               labelSize: 12,
               stroke: textColor,
               labelFont: '10px Arial',
+              values: showLabels ? undefined : () => [],
               ticks: { stroke: textColor },
               grid: { show: true, stroke: gridColor },
             },
@@ -118,7 +130,7 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
       );
 
       return () => uplotRef.current?.destroy();
-    }, [dimensions, options, labels, units, title, theme, hasData]);
+    }, [dimensions, options, labels, units, title, theme, hasData, isLive]);
 
     /**
      * Imperative API
@@ -169,10 +181,12 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
       <div
         ref={chartRef}
         style={{
-          width: '100%',
-          height: '100%',
-          minHeight: 200,
+          width: '90%',
+          height: '90%',
+          minHeight: 0, // allow flex to control height
+          maxHeight: '100%', // prevent overflow
           position: 'relative',
+          padding: 2,
         }}
       >
         {!hasData && (
@@ -192,15 +206,6 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
             {disconnectedMessage}
           </div>
         )}
-
-        <style>{`
-          .u-title {
-            font-size: 12px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: -20px;
-          }
-        `}</style>
       </div>
     );
   },

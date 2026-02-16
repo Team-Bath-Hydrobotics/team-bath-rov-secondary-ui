@@ -62,20 +62,24 @@ export const TelemetryTile = React.memo(
         elevation={2}
         sx={{
           position: 'relative',
-          minWidth: 150,
+          width: '100%',
+          height: 0,
+          paddingTop: '56.25%', // 16:9 aspect ratio
           minHeight: 250,
-          aspectRatio: '16/9',
+          maxHeight: 500,
           borderRadius: '8px',
+          overflow: 'hidden', // important to clip uPlot
         }}
       >
         <Box
           sx={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'primary.dark',
-            minWidth: 150,
-            minHeight: 250,
             borderRadius: '8px',
+            overflow: 'hidden',
+            backgroundColor: 'primary.dark',
           }}
         >
           <LineChart
@@ -85,6 +89,7 @@ export const TelemetryTile = React.memo(
             units={['s', Array.isArray(data) ? (data[0]?.unit ?? 'N/A') : (data?.unit ?? 'N/A')]}
             title={label}
             disconnectedMessage={disconnectedMessage}
+            isLive={isLive}
           />
         </Box>
 

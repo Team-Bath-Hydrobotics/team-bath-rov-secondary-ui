@@ -41,20 +41,18 @@ const FloatContent = () => {
   return (
     <Box sx={{ padding: 2 }}>
       <VerticalPageContentLayout>
-        <VerticalPageContentLayout>
-          <UploadComponent
-            buttonText="Upload CSV Data"
-            displayText={csvFile ? csvFile.name : 'No file uploaded'}
-            accept=".csv"
-            onChange={async (value) => {
-              const file = value[0];
-              if (!file) return;
+        <UploadComponent
+          buttonText="Upload CSV Data"
+          displayText={csvFile ? csvFile.name : 'No file uploaded'}
+          accept=".csv"
+          onChange={async (value) => {
+            const file = value[0];
+            if (!file) return;
 
-              updateFloatFile({ csvFile: file });
-              await handleFileUpload(file);
-            }}
-          />
-        </VerticalPageContentLayout>
+            updateFloatFile({ csvFile: file });
+            await handleFileUpload(file);
+          }}
+        />
         <TelemetryTile
           fieldId="Depth"
           label="Depth"
