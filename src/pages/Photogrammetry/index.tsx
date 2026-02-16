@@ -2,10 +2,12 @@ import { useState, useCallback } from 'react';
 import { Box, Button, Paper, Slider, Typography } from '@mui/material';
 import { MainContentLayout } from '../../layouts/MainContentLayout';
 import { TextInput } from '../../components/Inputs/TextInput';
-import { FolderUploadComponent } from '../../components/Inputs/FolderUploadComponent';
+import { UploadComponent } from '../../components/Inputs';
 import { ModelViewerPlaceholder } from '../../components/Tiles/ModelViewerPlaceholder';
 import type { ReconstructionStatus } from '../../types';
-
+import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import { Carousel } from '../../components/Carousel/Carousel';
 const PhotogrammetryContent = () => {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [folderPath, setFolderPath] = useState('');
@@ -71,130 +73,99 @@ const PhotogrammetryContent = () => {
   return (
     <Box
       sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1.5fr',
-        gridTemplateRows: 'auto auto auto',
-        gap: 1.5,
         padding: 2,
-        height: '100%',
       }}
     >
-      {/* Row 1, Col 1-2: Upload area */}
-      <Box sx={{ gridColumn: '1 / 3', gridRow: '1' }}>
-        <FolderUploadComponent
-          buttonText="Upload photos"
-          displayText={displayText}
-          onChange={handleFolderUpload}
-        />
-      </Box>
+      <HorizontalPageContentLayout>
+        <VerticalPageContentLayout>
+          <UploadComponent
+            buttonText="Upload Photo Folder"
+            displayText={displayText}
+            directory
+            filterImages
+            onChange={(files) => handleFolderUpload(files)}
+          />
+          <Carousel images={uploadedImages} />
+          <HorizontalPageContentLayout>
+            <TextInput
+              label="Estimated Coral Height"
+              value={estimatedCoralHeight !== null ? estimatedCoralHeight.toString() : ''}
+              onChange={handleCoralHeightChange}
+              lowerText="(cm)"
+            />
+            <TextInput
+              label="True Coral Length"
+              value={trueCoralLength !== null ? trueCoralLength.toString() : ''}
+              onChange={handleCoralLengthChange}
+              lowerText="(cm)"
+            />
+          </HorizontalPageContentLayout>
+          <HorizontalPageContentLayout>
+            <Button
+              variant="contained"
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              sx={{
+                color: 'primary.light',
+                width: '100%',
+                '&:disabled': {
+                  backgroundColor: 'grey.500',
+                  opacity: 0.4,
+                  color: 'white',
+                },
+              }}
+            >
+              {reconstructionStatus === 'processing' ? 'Generating...' : 'Generate model'}
+            </Button>
 
-      {/* Row 2, Col 1: Estimated Coral Height */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '1',
-          gridRow: '2',
-          p: 2,
-          borderRadius: '16px',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <TextInput
-          label="Estimated Coral Height"
-          value={estimatedCoralHeight !== null ? estimatedCoralHeight.toString() : ''}
-          onChange={handleCoralHeightChange}
-          lowerText="(cm)"
-        />
-      </Paper>
-
-      {/* Row 2, Col 2: True Coral Length */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '2',
-          gridRow: '2',
-          p: 2,
-          borderRadius: '16px',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <TextInput
-          label="True Coral Length"
-          value={trueCoralLength !== null ? trueCoralLength.toString() : ''}
-          onChange={handleCoralLengthChange}
-          lowerText="(cm)"
-        />
-      </Paper>
-
-      {/* Row 3, Col 1: Generate Model button */}
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleGenerate}
-        disabled={!canGenerate}
-        sx={{
-          gridColumn: '1',
-          gridRow: '3',
-          borderRadius: '16px',
-          fontSize: '1.25rem',
-          fontWeight: 700,
-          textTransform: 'none',
-          minHeight: 80,
-        }}
-      >
-        {reconstructionStatus === 'processing' ? 'Generating...' : 'Generate model'}
-      </Button>
-
-      {/* Row 3, Col 2: Scale Model slider */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '2',
-          gridRow: '3',
-          p: 2,
-          borderRadius: '16px',
-          backgroundColor: 'background.paper',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Scale Model
-        </Typography>
-        <Slider
-          value={modelScale}
-          onChange={handleScaleChange}
-          min={0.1}
-          max={5.0}
-          step={0.1}
-          valueLabelDisplay="auto"
-          valueLabelFormat={(v) => `${v.toFixed(1)}x`}
-          sx={{
-            color: 'secondary.main',
-            '& .MuiSlider-valueLabel': {
-              backgroundColor: 'secondary.main',
-            },
-          }}
-        />
-      </Paper>
-
-      {/* Row 1-3, Col 3: 3D Model Viewer */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '3',
-          gridRow: '1 / -1',
-          borderRadius: '16px',
-          backgroundColor: 'rgba(128, 128, 128, 0.15)',
-          overflow: 'hidden',
-        }}
-      >
-        <ModelViewerPlaceholder
-          status={reconstructionStatus}
-          estimatedHeight={estimatedCoralHeight}
-        />
-      </Paper>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                backgroundColor: 'background.paper',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Scale Model
+              </Typography>
+              <Slider
+                value={modelScale}
+                onChange={handleScaleChange}
+                min={0.1}
+                max={5.0}
+                step={0.1}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(v) => `${v.toFixed(1)}x`}
+                sx={{
+                  color: 'secondary.main',
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: 'secondary.main',
+                  },
+                }}
+              />
+            </Paper>
+          </HorizontalPageContentLayout>
+        </VerticalPageContentLayout>
+        <VerticalPageContentLayout>
+          {/* Row 1-3, Col 3: 3D Model Viewer */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: '16px',
+              backgroundColor: 'rgba(128, 128, 128, 0.15)',
+              overflow: 'hidden',
+            }}
+          >
+            <ModelViewerPlaceholder
+              status={reconstructionStatus}
+              estimatedHeight={estimatedCoralHeight}
+            />
+          </Paper>
+        </VerticalPageContentLayout>
+      </HorizontalPageContentLayout>
     </Box>
   );
 };
