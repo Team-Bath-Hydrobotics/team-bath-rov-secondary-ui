@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.config import settings
-from app.routers import health, jobs, manual_cad, upload, photogrammetry
+from app.routers import health, jobs, manual_cad, scaling, upload, photogrammetry
 from app.services.job_manager import job_manager
 from app.utils.file_utils import ensure_data_dirs
 
@@ -29,6 +29,7 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api")
 app.include_router(jobs.router, prefix="/api")
 app.include_router(manual_cad.router, prefix="/api")
+app.include_router(scaling.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
 app.include_router(photogrammetry.router, prefix="/api")
 
