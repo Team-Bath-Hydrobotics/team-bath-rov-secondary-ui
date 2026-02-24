@@ -11,8 +11,8 @@ class CameraCaptureService:
 
     def start_capture(self, job_id: str, rtsp_url: str = None, interval: float = 2.0):
         """Starts a background capture thread"""
-        url = rtsp_url or settings.DEFAULT_RTSP_URL
-        sec = interval or settings.DEFAULT_CAPTURE_INTERVAL
+        url = rtsp_url # or settings.DEFAULT_RTSP_URL
+        sec = interval # or settings.DEFAULT_CAPTURE_INTERVAL
         
         stop_event = threading.Event()
         self._capture_events[job_id] = stop_event
