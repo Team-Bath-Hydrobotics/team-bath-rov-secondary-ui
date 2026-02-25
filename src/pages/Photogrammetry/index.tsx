@@ -11,9 +11,12 @@ import {
 } from '@mui/material';
 import { MainContentLayout } from '../../layouts/MainContentLayout';
 import { TextInput } from '../../components/Inputs/TextInput';
-import { FolderUploadComponent } from '../../components/Inputs/FolderUploadComponent';
+import { UploadComponent } from '../../components/Inputs';
 import { ModelViewer } from '../../components/Tiles';
 import type { ReconstructionStatus } from '../../types';
+import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import { Carousel } from '../../components/Carousel/Carousel';
 import {
   createJob,
   uploadImages,
@@ -213,193 +216,151 @@ const PhotogrammetryContent = () => {
   return (
     <Box
       sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1.5fr',
-        gridTemplateRows: 'auto auto auto auto',
-        gap: 1.5,
         padding: 2,
-        height: '100%',
       }}
     >
-      {/* Row 1, Col 1-2: Upload area */}
-      <Box sx={{ gridColumn: '1 / 3', gridRow: '1' }}>
-        <FolderUploadComponent
-          buttonText="Upload photos"
-          displayText={displayText}
-          onChange={handleFolderUpload}
-        />
-      </Box>
+      <HorizontalPageContentLayout>
+        <VerticalPageContentLayout>
+          <UploadComponent
+            buttonText="Upload Photo Folder"
+            displayText={displayText}
+            directory
+            filterImages
+            onChange={(files) => handleFolderUpload(files)}
+          />
+          <Carousel images={uploadedImages} />
+          <HorizontalPageContentLayout>
+            <TextInput
+              label="Estimated Coral Height"
+              value={estimatedCoralHeight !== null ? estimatedCoralHeight.toString() : ''}
+              onChange={handleCoralHeightChange}
+              lowerText="(cm)"
+            />
+            <TextInput
+              label="True Coral Length"
+              value={trueCoralLength !== null ? trueCoralLength.toString() : ''}
+              onChange={handleCoralLengthChange}
+              lowerText="(cm)"
+            />
+          </HorizontalPageContentLayout>
+          <HorizontalPageContentLayout>
+            <Button
+              variant="contained"
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              sx={{
+                color: 'primary.light',
+                width: '100%',
+                '&:disabled': {
+                  backgroundColor: 'grey.500',
+                  opacity: 0.4,
+                  color: 'white',
+                },
+              }}
+            >
+              {loading && reconstructionStatus === 'processing' ? (
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+              ) : null}
+              {reconstructionStatus === 'processing' ? 'Generating...' : 'Generate model'}
+            </Button>
 
-      {/* Row 2, Col 1: Estimated Coral Height */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '1',
-          gridRow: '2',
-          p: 2,
-          borderRadius: '16px',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <TextInput
-          label="Estimated Coral Height"
-          value={estimatedCoralHeight !== null ? estimatedCoralHeight.toString() : ''}
-          onChange={handleCoralHeightChange}
-          lowerText="(cm)"
-        />
-      </Paper>
+            <Button
+              variant="outlined"
+              onClick={handleManualCAD}
+              disabled={!canManualCAD}
+              sx={{
+                width: '100%',
+                '&:disabled': {
+                  opacity: 0.4,
+                },
+              }}
+            >
+              {loading && reconstructionStatus === 'processing' && !canGenerate ? (
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+              ) : null}
+              Manual CAD Model
+            </Button>
+          </HorizontalPageContentLayout>
+          <HorizontalPageContentLayout>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                backgroundColor: 'background.paper',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Scale Model
+              </Typography>
+              <Slider
+                value={modelScale}
+                onChange={handleScaleChange}
+                min={0.1}
+                max={5.0}
+                step={0.1}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(v) => `${v.toFixed(1)}x`}
+                sx={{
+                  color: 'secondary.main',
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: 'secondary.main',
+                  },
+                }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleScale}
+                disabled={!canScale}
+                sx={{ mt: 1, textTransform: 'none' }}
+              >
+                {loading && canScale ? (
+                  <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+                ) : null}
+                Estimate Height
+              </Button>
+            </Paper>
 
-      {/* Row 2, Col 2: True Coral Length */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '2',
-          gridRow: '2',
-          p: 2,
-          borderRadius: '16px',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <TextInput
-          label="True Coral Length"
-          value={trueCoralLength !== null ? trueCoralLength.toString() : ''}
-          onChange={handleCoralLengthChange}
-          lowerText="(cm)"
-        />
-      </Paper>
+            {progressText && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'background.paper',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                }}
+              >
+                <CircularProgress size={20} color="warning" />
+                <Typography variant="body2" color="text.secondary">
+                  {progressText}
+                </Typography>
+              </Paper>
+            )}
+          </HorizontalPageContentLayout>
+        </VerticalPageContentLayout>
+        <VerticalPageContentLayout>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: '16px',
+              backgroundColor: 'rgba(128, 128, 128, 0.15)',
+              overflow: 'hidden',
+            }}
+          >
+            <ModelViewer
+              modelUrl={modelUrl}
+              status={reconstructionStatus}
+              estimatedHeight={estimatedCoralHeight}
+            />
+          </Paper>
+        </VerticalPageContentLayout>
+      </HorizontalPageContentLayout>
 
-      {/* Row 3, Col 1: Generate Model button */}
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={handleGenerate}
-        disabled={!canGenerate}
-        sx={{
-          gridColumn: '1',
-          gridRow: '3',
-          borderRadius: '16px',
-          fontSize: '1.25rem',
-          fontWeight: 700,
-          textTransform: 'none',
-          minHeight: 80,
-        }}
-      >
-        {loading && reconstructionStatus === 'processing' ? (
-          <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
-        ) : null}
-        {reconstructionStatus === 'processing' ? 'Generating...' : 'Generate model'}
-      </Button>
-
-      {/* Row 3, Col 2: Scale Model slider + Scale button */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '2',
-          gridRow: '3',
-          p: 2,
-          borderRadius: '16px',
-          backgroundColor: 'background.paper',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
-      >
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Scale Model
-        </Typography>
-        <Slider
-          value={modelScale}
-          onChange={handleScaleChange}
-          min={0.1}
-          max={5.0}
-          step={0.1}
-          valueLabelDisplay="auto"
-          valueLabelFormat={(v) => `${v.toFixed(1)}x`}
-          sx={{
-            color: 'secondary.main',
-            '& .MuiSlider-valueLabel': {
-              backgroundColor: 'secondary.main',
-            },
-          }}
-        />
-        <Button
-          variant="outlined"
-          color="secondary"
-          size="small"
-          onClick={handleScale}
-          disabled={!canScale}
-          sx={{ mt: 1, textTransform: 'none', borderRadius: '8px' }}
-        >
-          {loading && canScale ? (
-            <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
-          ) : null}
-          Estimate Height
-        </Button>
-      </Paper>
-
-      {/* Row 4, Col 1: Manual CAD button */}
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={handleManualCAD}
-        disabled={!canManualCAD}
-        sx={{
-          gridColumn: '1',
-          gridRow: '4',
-          borderRadius: '16px',
-          fontSize: '1rem',
-          fontWeight: 600,
-          textTransform: 'none',
-          minHeight: 60,
-        }}
-      >
-        {loading && reconstructionStatus === 'processing' && !canGenerate ? (
-          <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-        ) : null}
-        Manual CAD Model
-      </Button>
-
-      {/* Row 4, Col 2: Progress display */}
-      {progressText && (
-        <Paper
-          elevation={0}
-          sx={{
-            gridColumn: '2',
-            gridRow: '4',
-            p: 2,
-            borderRadius: '16px',
-            backgroundColor: 'background.paper',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-          }}
-        >
-          <CircularProgress size={20} color="warning" />
-          <Typography variant="body2" color="text.secondary">
-            {progressText}
-          </Typography>
-        </Paper>
-      )}
-
-      {/* Row 1-4, Col 3: 3D Model Viewer */}
-      <Paper
-        elevation={0}
-        sx={{
-          gridColumn: '3',
-          gridRow: '1 / -1',
-          borderRadius: '16px',
-          backgroundColor: 'rgba(128, 128, 128, 0.15)',
-          overflow: 'hidden',
-        }}
-      >
-        <ModelViewer
-          modelUrl={modelUrl}
-          status={reconstructionStatus}
-          estimatedHeight={estimatedCoralHeight}
-        />
-      </Paper>
-
-      {/* Error snackbar */}
       <Snackbar open={error !== null} autoHideDuration={6000} onClose={() => setError(null)}>
         <Alert severity="error" onClose={() => setError(null)} sx={{ width: '100%' }}>
           {error}

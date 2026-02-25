@@ -32,6 +32,7 @@ const TelemetryContent = () => {
           label={field.label}
           selected={true}
           data={telemetry[field.id]}
+          disconnectedMessage={'Check Broker Connection'}
         />
       )),
     [selectedTelemetryFields, telemetry],

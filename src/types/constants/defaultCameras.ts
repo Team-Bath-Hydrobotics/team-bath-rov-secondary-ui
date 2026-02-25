@@ -11,7 +11,7 @@ export const DEFAULT_CAMERAS: CameraConfig[] = [
     id: 1,
     name: 'Front Camera',
     streamId: 'camera-front',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ export const DEFAULT_CAMERAS: CameraConfig[] = [
     id: 3,
     name: 'Down Camera',
     streamId: 'camera-down',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 4,

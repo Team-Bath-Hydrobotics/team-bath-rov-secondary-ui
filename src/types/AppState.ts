@@ -2,7 +2,8 @@ import type { CameraConfig, CameraStateMap } from './camera.types';
 import type { TelemetryDataPoint } from './constants';
 import type { TelemetryFieldId } from './telemetry.types';
 import type { IcebergCalculationData } from './platform.type';
-
+import type { AppSettings } from './appsettings.types';
+import type { FloatFile } from './float.types';
 export type TelemetryPayload = Record<TelemetryFieldId, TelemetryDataPoint>;
 
 export interface AppState {
@@ -23,6 +24,11 @@ export interface AppState {
 
   /** Iceberg platform data for calculations */
   icebergCalculationData: IcebergCalculationData;
+
+  //** Float File */
+  floatFile: FloatFile;
+
+  settings: AppSettings;
 }
 
 /**
@@ -46,6 +52,12 @@ export interface AppStateContextValue {
   /** Set whether a camera is recording */
   setCameraRecording: (cameraId: number, isRecording: boolean) => void;
 
+  /** Update camera connection status */
+  updateCameraStatus: (
+    cameraId: number,
+    connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected',
+  ) => void;
+
   /**
    * Toggle a telemetry field selection.
    * Returns false if trying to select when already at max (3).
@@ -63,6 +75,9 @@ export interface AppStateContextValue {
 
   /** Update iceberg input data for calculations*/
   updateIcebergCalculationData: (data: IcebergCalculationData) => void;
+
+  /** Update float csv file */
+  updateFloatFile: (file: FloatFile) => void;
 }
 
 /**
@@ -77,8 +92,14 @@ export interface AppStateContextValue {
 export type AppStateAction =
   | { type: 'TOGGLE_CAMERA'; cameraId: number }
   | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
+  | {
+      type: 'UPDATE_CAMERA_STATUS';
+      cameraId: number;
+      connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected';
+    }
   | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }
   | { type: 'INITIALIZE_CAMERAS'; configs: CameraConfig[] }
   | { type: 'UPDATE_TELEMETRY'; payload: TelemetryPayload }
-  | { type: 'UPDATE_ICEBERG_DATA'; icebergCalculationData: IcebergCalculationData };
+  | { type: 'UPDATE_ICEBERG_DATA'; icebergCalculationData: IcebergCalculationData }
+  | { type: 'UPDATE_FLOAT_FILE'; file: FloatFile };

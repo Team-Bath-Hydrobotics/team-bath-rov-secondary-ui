@@ -1,0 +1,1 @@
+export { DetectorPage } from './DetectorPage';
