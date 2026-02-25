@@ -31,4 +31,15 @@ export type { AppState, AppStateContextValue, AppStateAction, TelemetryPayload }
 export type { SpeciesEntry, EdnaCalculatorState } from './edna.types';
 
 // Photogrammetry types
-export type { ReconstructionStatus, PhotogrammetryState } from './photogrammetry.types';
+export type {
+  ReconstructionStatus,
+  PhotogrammetryState,
+  JobStatus,
+  JobResponse,
+  UploadResponse,
+  RunResponse,
+  ScaleResponse,
+  ManualCADResponse,
+} from './photogrammetry.types';
+export type { ApiError } from './photogrammetry.types';
+export { createApiError } from './photogrammetry.types';

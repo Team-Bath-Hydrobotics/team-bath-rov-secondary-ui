@@ -1,5 +1,8 @@
 # Secondary UI
-- This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection)
+
+This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2026 entry.
+
+The backend services live in a separate repo: [`team-bath-rov-software`](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software).
 
 ### Tech stack
 - React + TypeScript
@@ -7,7 +10,7 @@
 - MUI for stanard components [https://mui.com/]
 
 
-Local Development
+## Local Development
 
 This project uses Node.js and npm.
 The Node version is locked to 20.19.0.
@@ -22,7 +25,8 @@ Verify the active version:
 ```
 node -v
 ```
-Running the project locally
+
+### Running the project locally
 ```
 cd ui
 
@@ -33,7 +37,39 @@ npm install
 npm run dev
 ```
 
-To connect to the telemetry broker add the following in an env file at the project root
+The dev server starts at `http://localhost:5173`.
+
+### Connecting to the backend
+
+The Vite dev server proxies all `/api/*` requests to `http://localhost:8100`, where the [photogrammetry backend](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/photogrammetry-backend) runs. To use backend features locally, start both servers:
+
+1. **Terminal 1** — backend:
+    ```bash
+    cd team-bath-rov-software/photogrammetry-backend
+    pip install -e .
+    uvicorn app.main:app --reload --port 8100
+    ```
+
+2. **Terminal 2** — UI:
+    ```bash
+    cd team-bath-rov-secondary-ui/ui
+    npm install
+    npm run dev
+    ```
+
+```
+┌─────────────────────────────┐       ┌──────────────────────────┐
+│  team-bath-rov-secondary-ui │       │ team-bath-rov-software   │
+│  (Vite + React)             │       │                          │
+│                             │  /api │  photogrammetry-backend  │
+│  localhost:5173  ───────────┼──────>│  localhost:8100          │
+│                             │ proxy │                          │
+└─────────────────────────────┘       └──────────────────────────┘
+```
+
+### MQTT telemetry
+
+To connect to the telemetry broker add the following in an `.env` file at the project root:
 ```
 VITE_MQTT_HOST=<WS host name>
 VITE_MQTT_PORT=<Web socket port number>
