@@ -186,11 +186,7 @@ const PhotogrammetryContent = () => {
   }, [trueCoralLength, estimatedCoralHeight]);
 
   const canGenerate =
-    uploadedImages.length > 0 &&
-    trueCoralLength !== null &&
-    trueCoralLength > 0 &&
-    reconstructionStatus !== 'processing' &&
-    !loading;
+    uploadedImages.length > 0 && reconstructionStatus !== 'processing' && !loading;
 
   const canScale =
     jobId !== null &&
@@ -356,6 +352,7 @@ const PhotogrammetryContent = () => {
               modelUrl={modelUrl}
               status={reconstructionStatus}
               estimatedHeight={estimatedCoralHeight}
+              trueLength={trueCoralLength}
             />
           </Paper>
         </VerticalPageContentLayout>
