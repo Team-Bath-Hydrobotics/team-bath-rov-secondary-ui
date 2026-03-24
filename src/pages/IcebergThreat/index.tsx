@@ -1,23 +1,58 @@
 import { MainContentLayout } from '../../layouts/MainContentLayout';
 import { useAppStateContext } from '../../context';
 import { TextInput } from '../../components/Inputs/TextInput';
-import { Box } from '@mui/material';
+import { Box, Button, Chip } from '@mui/material';
 import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
 import { UploadComponent } from '../../components/Inputs/UploadComponent';
 import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
 import { FlexibleDataGrid } from '../../components/Inputs/FlexibleDataGrid';
-import { Button } from '@mui/material';
-import type { GridColDef } from '@mui/x-data-grid';
+import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { ImageTile } from '../../components/Tiles/ImageTile';
 import { type GridValidRowModel } from '@mui/x-data-grid';
-import type { PlatformData, ThreatLevel } from '../../types';
+import type { PlatformData, ThreatLevelType } from '../../types';
+import { ThreatLevel } from '../../types';
+import { calculateIcebergThreats } from '../../utils';
+
+const threatColor = (level: ThreatLevelType): 'success' | 'warning' | 'error' | 'default' => {
+  switch (level) {
+    case ThreatLevel.GREEN:
+      return 'success';
+    case ThreatLevel.YELLOW:
+      return 'warning';
+    case ThreatLevel.RED:
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const ThreatChip = ({ value }: { value: ThreatLevelType }) => (
+  <Chip label={value} color={threatColor(value)} size="small" variant="filled" />
+);
 
 const IcebergThreatContent = () => {
   const { state, updateIcebergCalculationData } = useAppStateContext();
-  const { icebergDepth, platformData, imageFile } = state.icebergCalculationData;
+  const { icebergLat, icebergLon, icebergHeading, keelDepth, platformData, imageFile } =
+    state.icebergCalculationData;
+
+  const updateField = (field: string, value: string) => {
+    const numValue = value === '' ? 0 : Number(value);
+    if (!isNaN(numValue)) {
+      updateIcebergCalculationData({
+        ...state.icebergCalculationData,
+        [field]: numValue,
+      });
+    }
+  };
 
   const platformInputColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1, editable: true, headerClassName: 'bold-header' },
+    {
+      field: 'name',
+      headerName: 'Platform',
+      flex: 1,
+      editable: true,
+      headerClassName: 'bold-header',
+    },
     {
       field: 'latitude',
       headerName: 'Latitude',
@@ -34,7 +69,7 @@ const IcebergThreatContent = () => {
     },
     {
       field: 'oceanDepth',
-      headerName: 'Ocean Depth',
+      headerName: 'Depth (m)',
       flex: 1,
       editable: true,
       headerClassName: 'bold-header',
@@ -42,44 +77,49 @@ const IcebergThreatContent = () => {
   ];
 
   const platformOutputColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1, editable: true, headerClassName: 'bold-header' },
+    { field: 'name', headerName: 'Platform', flex: 1, headerClassName: 'bold-header' },
+    { field: 'distanceNm', headerName: 'Distance (nm)', flex: 1, headerClassName: 'bold-header' },
     {
-      field: 'generalThreatLevel',
-      headerName: 'General Threat',
+      field: 'surfaceThreatLevel',
+      headerName: 'Surface Threat',
       flex: 1,
-      editable: true,
       headerClassName: 'bold-header',
+      renderCell: (params: GridRenderCellParams) => <ThreatChip value={params.value} />,
     },
     {
-      field: 'subsurfaceThreatLevel',
-      headerName: 'Subsurface Threat',
+      field: 'subseaThreatLevel',
+      headerName: 'Subsea Threat',
       flex: 1,
-      editable: true,
       headerClassName: 'bold-header',
+      renderCell: (params: GridRenderCellParams) => <ThreatChip value={params.value} />,
     },
   ];
 
   const handleRowUpdate = (newRow: GridValidRowModel) => {
-    const updatedData = platformData.map((row) => (row.id === newRow.id ? newRow : row));
+    const updatedData = platformData.map((row) =>
+      row.id === newRow.id
+        ? {
+            ...row,
+            name: newRow.name,
+            latitude: Number(newRow.latitude),
+            longitude: Number(newRow.longitude),
+            oceanDepth: Number(newRow.oceanDepth),
+          }
+        : row,
+    );
     updateIcebergCalculationData({
-      icebergDepth,
-      platformData: GridDataToCalcData(updatedData),
-      imageFile,
+      ...state.icebergCalculationData,
+      platformData: updatedData as PlatformData[],
     });
     return newRow;
   };
 
-  const GridDataToCalcData = (data: GridValidRowModel[]): PlatformData[] => {
-    return data.map((row) => ({
-      id: row.id,
-      name: row.name,
-      latitude: Number(row.latitude),
-      longitude: Number(row.longitude),
-      oceanDepth: Number(row.oceanDepth),
-      generalThreatLevel: row.generalThreatLevel as (typeof ThreatLevel)[keyof typeof ThreatLevel],
-      subsurfaceThreatLevel:
-        row.subsurfaceThreatLevel as (typeof ThreatLevel)[keyof typeof ThreatLevel],
-    }));
+  const handleCalculate = () => {
+    const results = calculateIcebergThreats(icebergLat, icebergLon, keelDepth, platformData);
+    updateIcebergCalculationData({
+      ...state.icebergCalculationData,
+      platformData: results,
+    });
   };
 
   return (
@@ -87,43 +127,52 @@ const IcebergThreatContent = () => {
       <HorizontalPageContentLayout>
         <VerticalPageContentLayout>
           <UploadComponent
-            buttonText="Upload Iceberg Data"
+            buttonText="Upload Iceberg Image"
             displayText={imageFile ? imageFile.name : 'No file uploaded'}
-            // Extract only the first uploaded file, as iceberg page only keeps track of one image
             onChange={(value) =>
-              updateIcebergCalculationData({ icebergDepth, platformData, imageFile: value[0] })
+              updateIcebergCalculationData({ ...state.icebergCalculationData, imageFile: value[0] })
             }
             accept={'.JPG, .PNG, .JPEG, .jpeg, .png, .heic'}
-          ></UploadComponent>
+          />
           <ImageTile
             imagefile={imageFile ?? new File([], 'Iceberg Map.png')}
             altTitle="Iceberg Image"
-          ></ImageTile>
-          <HorizontalPageContentLayout>
-            <Button variant="contained">Calculate</Button>
+          />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <TextInput
-              label="Iceberg Keel Depth"
-              value={icebergDepth.toString()}
-              onChange={(value) => {
-                const numValue = value === '' ? 0 : Number(value);
-                if (!isNaN(numValue)) {
-                  updateIcebergCalculationData({ icebergDepth: numValue, platformData, imageFile });
-                }
-              }}
-            ></TextInput>
-          </HorizontalPageContentLayout>
+              label="Iceberg Latitude"
+              value={icebergLat === 0 ? '' : icebergLat.toString()}
+              onChange={(v) => updateField('icebergLat', v)}
+            />
+            <TextInput
+              label="Iceberg Longitude"
+              value={icebergLon === 0 ? '' : icebergLon.toString()}
+              onChange={(v) => updateField('icebergLon', v)}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <TextInput
+              label="Heading (°)"
+              value={icebergHeading === 0 ? '' : icebergHeading.toString()}
+              onChange={(v) => updateField('icebergHeading', v)}
+            />
+            <TextInput
+              label="Keel Depth (m)"
+              value={keelDepth === 0 ? '' : keelDepth.toString()}
+              onChange={(v) => updateField('keelDepth', v)}
+            />
+          </Box>
+          <Button variant="contained" onClick={handleCalculate} sx={{ alignSelf: 'flex-start' }}>
+            Calculate Threats
+          </Button>
         </VerticalPageContentLayout>
         <VerticalPageContentLayout>
           <FlexibleDataGrid
             data={platformData}
             columns={platformInputColumns}
             onProcessRowUpdate={handleRowUpdate}
-          ></FlexibleDataGrid>
-          <FlexibleDataGrid
-            data={platformData}
-            columns={platformOutputColumns}
-            onProcessRowUpdate={handleRowUpdate}
-          ></FlexibleDataGrid>
+          />
+          <FlexibleDataGrid data={platformData} columns={platformOutputColumns} />
         </VerticalPageContentLayout>
       </HorizontalPageContentLayout>
     </Box>
