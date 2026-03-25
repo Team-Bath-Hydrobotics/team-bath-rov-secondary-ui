@@ -139,6 +139,9 @@ const PhotogrammetryContent = () => {
     try {
       const job = await createJob();
       setJobId(job.id);
+      const flatFiles = uploadedImages.map((f) => new File([f], f.name, { type: f.type }));
+
+      await uploadImages(job.id, flatFiles);
       await uploadImages(job.id, uploadedImages);
       await runPhotogrammetry(job.id);
       startPolling(job.id);
