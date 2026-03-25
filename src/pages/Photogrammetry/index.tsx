@@ -139,6 +139,9 @@ const PhotogrammetryContent = () => {
     try {
       const job = await createJob();
       setJobId(job.id);
+      const flatFiles = uploadedImages.map((f) => new File([f], f.name, { type: f.type }));
+
+      await uploadImages(job.id, flatFiles);
       await uploadImages(job.id, uploadedImages);
       await runPhotogrammetry(job.id);
       startPolling(job.id);
@@ -186,11 +189,7 @@ const PhotogrammetryContent = () => {
   }, [trueCoralLength, estimatedCoralHeight]);
 
   const canGenerate =
-    uploadedImages.length > 0 &&
-    trueCoralLength !== null &&
-    trueCoralLength > 0 &&
-    reconstructionStatus !== 'processing' &&
-    !loading;
+    uploadedImages.length > 0 && reconstructionStatus !== 'processing' && !loading;
 
   const canScale =
     jobId !== null &&
@@ -356,6 +355,7 @@ const PhotogrammetryContent = () => {
               modelUrl={modelUrl}
               status={reconstructionStatus}
               estimatedHeight={estimatedCoralHeight}
+              trueLength={trueCoralLength}
             />
           </Paper>
         </VerticalPageContentLayout>
