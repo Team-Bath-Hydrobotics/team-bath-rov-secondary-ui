@@ -10,7 +10,86 @@ import { Button } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import { ImageTile } from '../../components/Tiles/ImageTile';
 import { type GridValidRowModel } from '@mui/x-data-grid';
-import type { PlatformData, ThreatLevel } from '../../types';
+import type { PlatformData } from '../../types';
+import { ThreatLevel } from '../../types';
+import { Chip } from '@mui/material';
+
+const ThreatChip = ({ level }: { level: keyof typeof ThreatLevel }) => {
+  const colors: Record<keyof typeof ThreatLevel, { bg: string; text: string }> = {
+    UNKNOWN: { bg: '#2d3c50ff', text: '#ffffffff' },
+    LOW: { bg: '#0e6038ff', text: '#ffffffff' },
+    MEDIUM: { bg: '#846a00ff', text: '#ffffffff' },
+    HIGH: { bg: '#6d0000ff', text: '#ffffffff' },
+  };
+
+  const { bg, text } = colors[level];
+
+  return (
+    <Chip
+      label={level}
+      size="small"
+      sx={{
+        backgroundColor: bg,
+        color: text,
+        fontWeight: 700,
+      }}
+    />
+  );
+};
+
+const NM_PER_DEGREE = 60;
+
+const latlonToNm = (latRef: number, lonRef: number, lat: number, lon: number): [number, number] => {
+  const y = (lat - latRef) * NM_PER_DEGREE;
+  const x = (lon - lonRef) * NM_PER_DEGREE;
+  return [x, y];
+};
+
+const headingToUnitVector = (heading: number): [number, number] => {
+  const rad = (heading * Math.PI) / 180;
+  return [Math.sin(rad), Math.cos(rad)];
+};
+
+const distancePointToLine = (px: number, py: number, dx: number, dy: number): number => {
+  return Math.abs(px * dy - py * dx);
+};
+
+const surfaceThreat = (
+  distanceNm: number,
+  keelDepth: number,
+  waterDepth: number,
+): keyof typeof ThreatLevel => {
+  if (keelDepth >= 1.1 * waterDepth) return 'LOW';
+  if (distanceNm > 10) return 'LOW';
+  if (distanceNm >= 5) return 'MEDIUM';
+  return 'HIGH';
+};
+
+const subseaThreat = (
+  distanceNm: number,
+  keelDepth: number,
+  waterDepth: number,
+): keyof typeof ThreatLevel => {
+  if (distanceNm > 25) return 'LOW';
+  const ratio = keelDepth / waterDepth;
+  if (ratio >= 1.1) return 'LOW';
+  if (ratio >= 0.9) return 'HIGH';
+  if (ratio >= 0.7) return 'MEDIUM';
+  return 'LOW';
+};
+
+const formatThreat = (level: keyof typeof ThreatLevel) => {
+  switch (level) {
+    case 'LOW':
+      return 'Low';
+    case 'MEDIUM':
+      return 'Medium';
+    case 'HIGH':
+      return 'High';
+    default:
+      return 'Unknown';
+  }
+};
 
 const IcebergThreatContent = () => {
   const { state, updateIcebergCalculationData } = useAppStateContext();
@@ -42,20 +121,21 @@ const IcebergThreatContent = () => {
   ];
 
   const platformOutputColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', flex: 1, editable: true, headerClassName: 'bold-header' },
+    { field: 'name', headerName: 'Name', flex: 1, headerClassName: 'bold-header' },
     {
       field: 'generalThreatLevel',
       headerName: 'General Threat',
       flex: 1,
-      editable: true,
       headerClassName: 'bold-header',
+      renderCell: (params) => <ThreatChip level={params.value as keyof typeof ThreatLevel} />,
     },
+
     {
       field: 'subsurfaceThreatLevel',
       headerName: 'Subsurface Threat',
       flex: 1,
-      editable: true,
       headerClassName: 'bold-header',
+      renderCell: (params) => <ThreatChip level={params.value as keyof typeof ThreatLevel} />,
     },
   ];
 
@@ -63,23 +143,48 @@ const IcebergThreatContent = () => {
     const updatedData = platformData.map((row) => (row.id === newRow.id ? newRow : row));
     updateIcebergCalculationData({
       icebergDepth,
-      platformData: GridDataToCalcData(updatedData),
+      platformData: updatedData as PlatformData[],
       imageFile,
     });
     return newRow;
   };
 
-  const GridDataToCalcData = (data: GridValidRowModel[]): PlatformData[] => {
-    return data.map((row) => ({
-      id: row.id,
-      name: row.name,
-      latitude: Number(row.latitude),
-      longitude: Number(row.longitude),
-      oceanDepth: Number(row.oceanDepth),
-      generalThreatLevel: row.generalThreatLevel as (typeof ThreatLevel)[keyof typeof ThreatLevel],
-      subsurfaceThreatLevel:
-        row.subsurfaceThreatLevel as (typeof ThreatLevel)[keyof typeof ThreatLevel],
-    }));
+  const calculateThreats = () => {
+    const iceberg = {
+      lat: 46,
+      lon: -48.5,
+      heading: 45,
+      keelDepth: icebergDepth,
+    };
+
+    const [dx, dy] = headingToUnitVector(iceberg.heading);
+
+    const updated = platformData.map((p) => {
+      const [px, py] = latlonToNm(
+        iceberg.lat,
+        iceberg.lon,
+        Number(p.latitude),
+        Number(p.longitude),
+      );
+
+      const distanceNm = distancePointToLine(px, py, dx, dy);
+
+      return {
+        ...p,
+        generalThreatLevel: formatThreat(
+          surfaceThreat(distanceNm, iceberg.keelDepth, Number(p.oceanDepth)),
+        ),
+        subsurfaceThreatLevel: formatThreat(
+          subseaThreat(distanceNm, iceberg.keelDepth, Number(p.oceanDepth)),
+        ),
+      };
+    });
+
+    updateIcebergCalculationData({
+      icebergDepth,
+      platformData: updated as PlatformData[],
+      imageFile,
+    });
   };
 
   return (
@@ -100,7 +205,9 @@ const IcebergThreatContent = () => {
             altTitle="Iceberg Image"
           ></ImageTile>
           <HorizontalPageContentLayout>
-            <Button variant="contained">Calculate</Button>
+            <Button variant="contained" onClick={calculateThreats}>
+              Calculate
+            </Button>
             <TextInput
               label="Iceberg Keel Depth"
               value={icebergDepth.toString()}
