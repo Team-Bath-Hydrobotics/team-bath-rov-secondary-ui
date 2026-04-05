@@ -21,7 +21,6 @@ const NM_PER_DEGREE = 60; // Nautical miles per degree of latitude anywhere, and
 const latlonToNm = (latRef: number, lonRef: number, lat: number, lon: number): [number, number] => {
   const y = (lat - latRef) * NM_PER_DEGREE;
   // Adjust x distance by cosine of latitude to account for convergence of longitude lines
-  console.log(lon, lonRef, latRef);
   const x = (lon - lonRef) * NM_PER_DEGREE * Math.cos((latRef * Math.PI) / 180);
   return [x, y];
 };
@@ -60,11 +59,7 @@ const nauticalDistanceFromData = (
     // use straight-line distance from iceberg start position to platform instead
     return Math.sqrt(px * px + py * py);
   }
-  console.log(px, py, dx, dy);
   const distanceNm = distancePointToLine(px, py, dx, dy);
-  console.log(
-    `Calculated distance from iceberg track to platform at lat ${platformLatitude}, lon ${platformLongitude} is ${distanceNm.toFixed(2)} NM (t=${t.toFixed(2)} along track)`,
-  );
   return distanceNm;
 };
 
