@@ -9,9 +9,15 @@ interface ModelViewerProps {
   modelUrl: string | null;
   status: ReconstructionStatus;
   estimatedHeight: number | null;
+  trueLength: number | null;
 }
 
-export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerProps) => {
+export const ModelViewer = ({
+  modelUrl,
+  status,
+  estimatedHeight,
+  trueLength,
+}: ModelViewerProps) => {
   const showModel = modelUrl && status === 'complete';
 
   const getStatusText = () => {
@@ -39,23 +45,48 @@ export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerPr
           environment-image="neutral"
           style={{ width: '100%', height: '100%', minHeight: 400 }}
         />
-        {estimatedHeight !== null && (
-          <Typography
-            variant="h5"
-            fontWeight={700}
+        {(estimatedHeight !== null || trueLength !== null) && (
+          <Box
             sx={{
               position: 'absolute',
               top: 16,
               right: 24,
-              color: 'text.primary',
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0.5,
             }}
           >
-            Height: {estimatedHeight}cm
-          </Typography>
+            {trueLength !== null && (
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={{
+                  color: 'text.primary',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                }}
+              >
+                Length: {trueLength}cm
+              </Typography>
+            )}
+            {estimatedHeight !== null && (
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={{
+                  color: 'text.primary',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                }}
+              >
+                Height: {estimatedHeight}cm
+              </Typography>
+            )}
+          </Box>
         )}
       </Box>
     );
@@ -80,14 +111,28 @@ export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerPr
         <CodeIcon sx={{ fontSize: 28, color: 'text.disabled' }} />
       </Box>
 
-      {estimatedHeight !== null && (
-        <Typography
-          variant="h5"
-          fontWeight={700}
-          sx={{ position: 'absolute', top: 16, right: 24, color: 'text.primary' }}
+      {(estimatedHeight !== null || trueLength !== null) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}
         >
-          Height: {estimatedHeight}cm
-        </Typography>
+          {trueLength !== null && (
+            <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+              Length: {trueLength}cm
+            </Typography>
+          )}
+          {estimatedHeight !== null && (
+            <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+              Height: {estimatedHeight}cm
+            </Typography>
+          )}
+        </Box>
       )}
 
       {status === 'processing' ? (
