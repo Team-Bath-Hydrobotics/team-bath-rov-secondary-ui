@@ -7,8 +7,12 @@ import {
   Slider,
   Snackbar,
   Alert,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import BuildIcon from '@mui/icons-material/Build';
 import { MainContentLayout } from '../../layouts/MainContentLayout';
 import { TextInput } from '../../components/Inputs/TextInput';
 import { UploadComponent } from '../../components/Inputs';
@@ -28,6 +32,9 @@ import {
 } from '../../api';
 
 const POLL_INTERVAL_MS = 2000;
+const STORAGE_KEY = 'photogrammetry_job_id';
+
+type Mode = 'photogrammetry' | 'manual-cad';
 
 const PhotogrammetryContent = () => {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -42,6 +49,7 @@ const PhotogrammetryContent = () => {
   const [stage, setStage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>('photogrammetry');
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -51,10 +59,6 @@ const PhotogrammetryContent = () => {
       pollingRef.current = null;
     }
   }, []);
-
-  useEffect(() => {
-    return stopPolling;
-  }, [stopPolling]);
 
   const startPolling = useCallback(
     (id: string) => {
@@ -86,6 +90,60 @@ const PhotogrammetryContent = () => {
     },
     [stopPolling],
   );
+
+  // Restore persisted job on mount
+  useEffect(() => {
+    const savedJobId = localStorage.getItem(STORAGE_KEY);
+    if (!savedJobId) return;
+
+    let cancelled = false;
+
+    const restoreJob = async () => {
+      try {
+        const job = await getJob(savedJobId);
+        if (cancelled) return;
+
+        setJobId(savedJobId);
+
+        if (job.status === 'complete') {
+          setReconstructionStatus('complete');
+          setModelUrl(getModelUrl(savedJobId));
+          if (job.estimated_height_cm !== null) {
+            setEstimatedCoralHeight(job.estimated_height_cm);
+          }
+        } else if (job.status === 'error') {
+          setReconstructionStatus('error');
+          setError(job.error ?? 'Previous job failed');
+        } else {
+          // Job still running — resume polling
+          setReconstructionStatus('processing');
+          setProgress(job.progress);
+          setStage(job.stage);
+          startPolling(savedJobId);
+        }
+      } catch {
+        // Job not found on backend — clear stale reference
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    };
+
+    restoreJob();
+
+    return () => {
+      cancelled = true;
+    };
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return stopPolling;
+  }, [stopPolling]);
+
+  const persistJobId = useCallback((id: string) => {
+    setJobId(id);
+    localStorage.setItem(STORAGE_KEY, id);
+  }, []);
 
   const handleFolderUpload = useCallback((files: File[]) => {
     setUploadedImages(files);
@@ -138,7 +196,7 @@ const PhotogrammetryContent = () => {
 
     try {
       const job = await createJob();
-      setJobId(job.id);
+      persistJobId(job.id);
       await uploadImages(job.id, uploadedImages);
       await runPhotogrammetry(job.id);
       startPolling(job.id);
@@ -148,7 +206,27 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [uploadedImages, startPolling]);
+  }, [uploadedImages, startPolling, persistJobId]);
+
+  const handleRetryWithoutUndistort = useCallback(async () => {
+    if (!jobId) return;
+    setLoading(true);
+    setError(null);
+    setReconstructionStatus('processing');
+    setProgress(0);
+    setStage(null);
+    setModelUrl(null);
+
+    try {
+      await runPhotogrammetry(jobId, { skipUndistort: true });
+      startPolling(jobId);
+    } catch (err) {
+      setReconstructionStatus('error');
+      setError(err instanceof Error ? err.message : 'Retry failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [jobId, startPolling]);
 
   const handleScale = useCallback(async () => {
     if (!jobId || trueCoralLength === null) return;
@@ -173,7 +251,7 @@ const PhotogrammetryContent = () => {
 
     try {
       const job = await createJob();
-      setJobId(job.id);
+      persistJobId(job.id);
       const result = await generateManualCAD(job.id, estimatedCoralHeight ?? 20, trueCoralLength);
       setModelUrl(result.output_url);
       setReconstructionStatus('complete');
@@ -183,14 +261,30 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [trueCoralLength, estimatedCoralHeight]);
+  }, [trueCoralLength, estimatedCoralHeight, persistJobId]);
+
+  const handleModeChange = useCallback(
+    (_event: React.MouseEvent<HTMLElement>, newMode: Mode | null) => {
+      if (newMode !== null) {
+        setMode(newMode);
+      }
+    },
+    [],
+  );
+
+  const handleNewJob = useCallback(() => {
+    stopPolling();
+    localStorage.removeItem(STORAGE_KEY);
+    setJobId(null);
+    setModelUrl(null);
+    setReconstructionStatus('idle');
+    setProgress(0);
+    setStage(null);
+    setError(null);
+  }, [stopPolling]);
 
   const canGenerate =
-    uploadedImages.length > 0 &&
-    trueCoralLength !== null &&
-    trueCoralLength > 0 &&
-    reconstructionStatus !== 'processing' &&
-    !loading;
+    uploadedImages.length > 0 && reconstructionStatus !== 'processing' && !loading;
 
   const canScale =
     jobId !== null &&
@@ -204,6 +298,8 @@ const PhotogrammetryContent = () => {
     trueCoralLength > 0 &&
     reconstructionStatus !== 'processing' &&
     !loading;
+
+  const canRetry = jobId !== null && reconstructionStatus === 'error' && !loading;
 
   const displayText =
     folderPath && uploadedImages.length > 0
@@ -221,35 +317,77 @@ const PhotogrammetryContent = () => {
     >
       <HorizontalPageContentLayout>
         <VerticalPageContentLayout>
-          <UploadComponent
-            buttonText="Upload Photo Folder"
-            displayText={displayText}
-            directory
-            filterImages
-            onChange={(files) => handleFolderUpload(files)}
-          />
-          <Carousel images={uploadedImages} />
-          <HorizontalPageContentLayout>
-            <TextInput
-              label="Estimated Coral Height"
-              value={estimatedCoralHeight !== null ? estimatedCoralHeight.toString() : ''}
-              onChange={handleCoralHeightChange}
-              lowerText="(cm)"
-            />
-            <TextInput
-              label="True Coral Length"
-              value={trueCoralLength !== null ? trueCoralLength.toString() : ''}
-              onChange={handleCoralLengthChange}
-              lowerText="(cm)"
-            />
-          </HorizontalPageContentLayout>
-          <HorizontalPageContentLayout>
+          <ToggleButtonGroup
+            value={mode}
+            exclusive
+            onChange={handleModeChange}
+            sx={{ width: '100%' }}
+          >
+            <ToggleButton
+              value="photogrammetry"
+              sx={{ flex: 1, textTransform: 'none', color: 'text.secondary' }}
+            >
+              <CameraAltIcon sx={{ mr: 1 }} />
+              Photogrammetry
+            </ToggleButton>
+            <ToggleButton
+              value="manual-cad"
+              sx={{ flex: 1, textTransform: 'none', color: 'text.secondary' }}
+            >
+              <BuildIcon sx={{ mr: 1 }} />
+              Manual CAD
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {mode === 'photogrammetry' && (
+            <>
+              <UploadComponent
+                buttonText="Upload Photo Folder"
+                displayText={displayText}
+                directory
+                filterImages
+                onChange={(files) => handleFolderUpload(files)}
+              />
+              <Carousel images={uploadedImages} />
+              <Button
+                variant="contained"
+                onClick={handleGenerate}
+                disabled={!canGenerate}
+                sx={{
+                  color: 'primary.light',
+                  width: '100%',
+                  '&:disabled': {
+                    backgroundColor: 'grey.500',
+                    opacity: 0.4,
+                    color: 'white',
+                  },
+                }}
+              >
+                {loading && reconstructionStatus === 'processing' ? (
+                  <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+                ) : null}
+                {reconstructionStatus === 'processing' ? 'Generating...' : 'Generate Model'}
+              </Button>
+
+              {canRetry && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  onClick={handleRetryWithoutUndistort}
+                  sx={{ width: '100%', textTransform: 'none' }}
+                >
+                  Retry Without Undistortion
+                </Button>
+              )}
+            </>
+          )}
+
+          {mode === 'manual-cad' && (
             <Button
               variant="contained"
-              onClick={handleGenerate}
-              disabled={!canGenerate}
+              onClick={handleManualCAD}
+              disabled={!canManualCAD}
               sx={{
-                color: 'primary.light',
                 width: '100%',
                 '&:disabled': {
                   backgroundColor: 'grey.500',
@@ -261,25 +399,24 @@ const PhotogrammetryContent = () => {
               {loading && reconstructionStatus === 'processing' ? (
                 <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
               ) : null}
-              {reconstructionStatus === 'processing' ? 'Generating...' : 'Generate model'}
+              Generate Manual CAD Model
             </Button>
+          )}
 
-            <Button
-              variant="outlined"
-              onClick={handleManualCAD}
-              disabled={!canManualCAD}
-              sx={{
-                width: '100%',
-                '&:disabled': {
-                  opacity: 0.4,
-                },
-              }}
-            >
-              {loading && reconstructionStatus === 'processing' && !canGenerate ? (
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-              ) : null}
-              Manual CAD Model
-            </Button>
+          {/* Shared controls: inputs, scaling + progress */}
+          <HorizontalPageContentLayout>
+            <TextInput
+              label="Estimated Coral Height"
+              value={estimatedCoralHeight !== null ? estimatedCoralHeight.toString() : ''}
+              onChange={handleCoralHeightChange}
+              lowerText={mode === 'manual-cad' ? '(cm) — defaults to 20cm if empty' : '(cm)'}
+            />
+            <TextInput
+              label="True Coral Length"
+              value={trueCoralLength !== null ? trueCoralLength.toString() : ''}
+              onChange={handleCoralLengthChange}
+              lowerText="(cm)"
+            />
           </HorizontalPageContentLayout>
           <HorizontalPageContentLayout>
             <Paper
@@ -315,7 +452,16 @@ const PhotogrammetryContent = () => {
                 size="small"
                 onClick={handleScale}
                 disabled={!canScale}
-                sx={{ mt: 1, textTransform: 'none' }}
+                sx={{
+                  mt: 1,
+                  textTransform: 'none',
+                  color: 'grey.300',
+                  borderColor: 'grey.400',
+                  '&.Mui-disabled': {
+                    color: 'grey.500',
+                    borderColor: 'grey.600',
+                  },
+                }}
               >
                 {loading && canScale ? (
                   <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
@@ -342,6 +488,17 @@ const PhotogrammetryContent = () => {
               </Paper>
             )}
           </HorizontalPageContentLayout>
+
+          {(reconstructionStatus === 'complete' || reconstructionStatus === 'error') && (
+            <Button
+              variant="text"
+              size="small"
+              onClick={handleNewJob}
+              sx={{ textTransform: 'none' }}
+            >
+              Start New Job
+            </Button>
+          )}
         </VerticalPageContentLayout>
         <VerticalPageContentLayout>
           <Paper
@@ -356,6 +513,7 @@ const PhotogrammetryContent = () => {
               modelUrl={modelUrl}
               status={reconstructionStatus}
               estimatedHeight={estimatedCoralHeight}
+              trueLength={trueCoralLength}
             />
           </Paper>
         </VerticalPageContentLayout>
