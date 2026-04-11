@@ -5,13 +5,25 @@ import React from 'react';
  * Camera toggle controls for the sidebar.
  * Displays a checkbox for each camera to enable/disable it.
  */
-export const CameraToggle = React.memo(() => {
-  const { cameraConfigs, state, toggleCamera } = useAppStateContext();
+export interface CameraToggleProps {
+  isCopilot: boolean; // Indicates whether this toggle is for CoPilot or Detection
+}
+export const CameraToggle = React.memo(({ isCopilot }: CameraToggleProps) => {
+  const {
+    copilotCameraConfigs,
+    detectionCameraConfigs,
+    state,
+    toggleCamera,
+    canSelectMoreCameras,
+  } = useAppStateContext();
+  const cameraConfigs = isCopilot ? copilotCameraConfigs : detectionCameraConfigs;
 
   return (
     <FormGroup>
       {cameraConfigs.map((camera) => {
-        const cameraState = state.cameras[camera.id];
+        const cameraState = isCopilot
+          ? state.camerasCopilot[camera.id]
+          : state.camerasDetection[camera.id];
         const isEnabled = cameraState?.enabled ?? false;
 
         return (
@@ -20,7 +32,8 @@ export const CameraToggle = React.memo(() => {
             control={
               <Checkbox
                 checked={isEnabled}
-                onChange={() => toggleCamera(camera.id)}
+                onChange={() => toggleCamera(camera.id, isCopilot)}
+                disabled={!isEnabled && !canSelectMoreCameras(isCopilot)}
                 size="small"
                 sx={{
                   '&.Mui-checked': {

@@ -41,5 +41,7 @@ export type {
   ScaleResponse,
   ManualCADResponse,
 } from './photogrammetry.types';
-export type { ApiError } from './photogrammetry.types';
-export { createApiError } from './photogrammetry.types';
+export type { ApiError } from './api.types';
+export { createApiError } from './api.types';
+export type { DetectionResponse, ModelResponse, CrabDetection } from './crab-detection.types';
+export type { SettingsState } from './settings.types';

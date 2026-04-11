@@ -4,7 +4,7 @@ import { TextInput } from '../../components/Inputs/TextInput';
 import { Box } from '@mui/material';
 import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
 import { UploadComponent } from '../../components/Inputs/UploadComponent';
-import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout';
 import { FlexibleDataGrid } from '../../components/Inputs/FlexibleDataGrid';
 import { Button } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';

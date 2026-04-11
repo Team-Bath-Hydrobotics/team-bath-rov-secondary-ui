@@ -15,7 +15,7 @@ import { UploadComponent } from '../../components/Inputs';
 import { ModelViewer } from '../../components/Tiles';
 import type { ReconstructionStatus } from '../../types';
 import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
-import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout';
 import { Carousel } from '../../components/Carousel/Carousel';
 import {
   createJob,
@@ -26,10 +26,12 @@ import {
   generateManualCAD,
   getModelUrl,
 } from '../../api';
+import { useAppStateContext } from '../../context';
 
 const POLL_INTERVAL_MS = 2000;
 
 const PhotogrammetryContent = () => {
+  const { state } = useAppStateContext();
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [folderPath, setFolderPath] = useState('');
   const [estimatedCoralHeight, setEstimatedCoralHeight] = useState<number | null>(null);
@@ -42,7 +44,7 @@ const PhotogrammetryContent = () => {
   const [stage, setStage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const photogrammetryApiUrl = state.settings.networkSettings.photogrammetryApiUrl;
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -61,7 +63,7 @@ const PhotogrammetryContent = () => {
       stopPolling();
       pollingRef.current = setInterval(async () => {
         try {
-          const job = await getJob(id);
+          const job = await getJob(photogrammetryApiUrl, id);
           setProgress(job.progress);
           setStage(job.stage);
 
@@ -137,10 +139,10 @@ const PhotogrammetryContent = () => {
     setModelUrl(null);
 
     try {
-      const job = await createJob();
+      const job = await createJob(photogrammetryApiUrl);
       setJobId(job.id);
-      await uploadImages(job.id, uploadedImages);
-      await runPhotogrammetry(job.id);
+      await uploadImages(photogrammetryApiUrl, job.id, uploadedImages);
+      await runPhotogrammetry(photogrammetryApiUrl, job.id);
       startPolling(job.id);
     } catch (err) {
       setReconstructionStatus('error');
@@ -148,7 +150,7 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [uploadedImages, startPolling]);
+  }, [uploadedImages, startPolling, photogrammetryApiUrl]);
 
   const handleScale = useCallback(async () => {
     if (!jobId || trueCoralLength === null) return;
@@ -156,14 +158,14 @@ const PhotogrammetryContent = () => {
     setError(null);
 
     try {
-      const result = await estimateScale(jobId, trueCoralLength);
+      const result = await estimateScale(photogrammetryApiUrl, jobId, trueCoralLength);
       setEstimatedCoralHeight(result.estimated_height_cm);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Scaling failed');
     } finally {
       setLoading(false);
     }
-  }, [jobId, trueCoralLength]);
+  }, [jobId, trueCoralLength, photogrammetryApiUrl]);
 
   const handleManualCAD = useCallback(async () => {
     if (trueCoralLength === null) return;
@@ -172,9 +174,14 @@ const PhotogrammetryContent = () => {
     setReconstructionStatus('processing');
 
     try {
-      const job = await createJob();
+      const job = await createJob(photogrammetryApiUrl);
       setJobId(job.id);
-      const result = await generateManualCAD(job.id, estimatedCoralHeight ?? 20, trueCoralLength);
+      const result = await generateManualCAD(
+        photogrammetryApiUrl,
+        job.id,
+        estimatedCoralHeight ?? 20,
+        trueCoralLength,
+      );
       setModelUrl(result.output_url);
       setReconstructionStatus('complete');
     } catch (err) {
@@ -183,7 +190,7 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [trueCoralLength, estimatedCoralHeight]);
+  }, [trueCoralLength, estimatedCoralHeight, photogrammetryApiUrl]);
 
   const canGenerate =
     uploadedImages.length > 0 &&

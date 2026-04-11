@@ -19,10 +19,13 @@ import React from 'react';
  * Main content with inline controls panel and masonry grid.
  */
 const CoPilotContent = () => {
-  const { state, cameraConfigs } = useAppStateContext();
+  const { state, copilotCameraConfigs } = useAppStateContext();
   const { selectedTelemetryCopilot, telemetry } = state;
 
-  const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
+  const stableCameraConfigs = useMemo(
+    () => copilotCameraConfigs ?? DEFAULT_CAMERAS,
+    [copilotCameraConfigs],
+  );
   const selectedTelemetryFields = useMemo(
     () => TELEMETRY_FIELDS.filter((f) => selectedTelemetryCopilot.includes(f.id)),
     [selectedTelemetryCopilot],
@@ -31,7 +34,7 @@ const CoPilotContent = () => {
   const cameraTiles = useMemo(
     () =>
       stableCameraConfigs.map((camera) => {
-        const cameraState = state.cameras[camera.id];
+        const cameraState = state.camerasCopilot[camera.id];
         return (
           <CameraTile
             key={camera.id}
@@ -39,10 +42,11 @@ const CoPilotContent = () => {
             name={camera.name}
             enabled={cameraState?.enabled ?? false}
             isRecording={cameraState?.isRecording ?? false}
+            isCopilot={true}
           />
         );
       }),
-    [stableCameraConfigs, state.cameras],
+    [stableCameraConfigs, state.camerasCopilot],
   );
 
   const telemetryTiles = useMemo(
@@ -77,7 +81,7 @@ const CoPilotSidebarNav = React.memo(({ title }: CoPilotSidebarNavProps) => {
   return (
     <>
       <ToggleLayout title="Cameras" icon={<VideocamIcon fontSize="small" />}>
-        <CameraToggle />
+        <CameraToggle isCopilot={true} />
       </ToggleLayout>
       <ToggleLayout title={title} icon={<ShowChartIcon fontSize="small" />}>
         <TelemetryToggle isCopilot={true} />
