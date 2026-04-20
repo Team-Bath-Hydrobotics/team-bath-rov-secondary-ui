@@ -1,5 +1,7 @@
 import mqtt from 'mqtt';
-import type { TelemetryPayload } from '../types';
+import type { SessionConfig, TelemetryPayload } from '../types';
+
+export const SESSION_CONFIG_TOPIC = 'session/config';
 
 const host = import.meta.env.VITE_MQTT_HOST;
 const port = import.meta.env.VITE_MQTT_PORT;
@@ -55,4 +57,19 @@ export function isValidTelemetry(payload: unknown): payload is TelemetryPayload 
   }
 
   return true;
+}
+
+/**
+ * Publish a session config to `session/config`. Retained so any
+ * processor/db-writer that connects mid-session receives the latest
+ * mapping. Resolves on broker ack, rejects on transport error.
+ */
+export function publishSessionConfig(config: SessionConfig): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(config);
+    mqttClient.publish(SESSION_CONFIG_TOPIC, payload, { qos: 1, retain: true }, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 }

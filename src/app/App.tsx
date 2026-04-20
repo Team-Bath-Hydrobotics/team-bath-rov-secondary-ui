@@ -8,6 +8,7 @@ import { Photogrammetry } from '../pages/Photogrammetry';
 import { CoPilot } from '../pages/CoPilot';
 import { EDna } from '../pages/EDna';
 import { Float } from '../pages/Float';
+import { SessionConfigPage } from '../pages/SessionConfig';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="copilot" replace />} />
+          <Route path="session-config" element={<SessionConfigPage />} />
           <Route path="copilot" element={<CoPilot />} />
           <Route path="telemetry" element={<Telemetry />} />
           <Route path="detection" element={<Detection />} />
