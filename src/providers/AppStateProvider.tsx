@@ -10,72 +10,79 @@ import {
   type TelemetryFieldId,
 } from '../types';
 import { ThreatLevel } from '../types';
-import { DEFAULT_CAMERAS } from '../types/constants';
 import { type TelemetryPayload } from '../types';
+import { DEFAULT_CAMERAS } from '../types/constants/defaultCameras';
 
 interface AppStateProviderProps {
   children: ReactNode;
   cameraConfigs?: CameraConfig[];
 }
 
-export const AppStateProvider = ({
-  children,
-  cameraConfigs = DEFAULT_CAMERAS,
-}: AppStateProviderProps) => {
+export const AppStateProvider = ({ children, cameraConfigs }: AppStateProviderProps) => {
   const MAX_TELEMETRY_SELECTIONS = 3;
 
   const stableCameraConfigs = useMemo(() => cameraConfigs ?? DEFAULT_CAMERAS, [cameraConfigs]);
-
   // Lazy init reducer to avoid resetting on re-renders
-  const [state, dispatch] = useReducer(AppStateReducer, stableCameraConfigs, (configs) => {
-    const cameras = Object.fromEntries(
-      configs.map((config) => [
+  const [state, dispatch] = useReducer(AppStateReducer, stableCameraConfigs, (cameraConfigs) => {
+    const camerasCopilot = Object.fromEntries(
+      cameraConfigs.map((config: CameraConfig) => [
         config.id,
         { id: config.id, enabled: config.defaultEnabled, isRecording: false },
       ]),
     );
+    const camerasDetection = Object.fromEntries(
+      cameraConfigs.map((config: CameraConfig) => [
+        config.id,
+        { id: config.id, enabled: config.defaultEnabled, isRecording: false },
+      ]),
+    );
+
     return {
-      cameras,
+      camerasCopilot: camerasCopilot,
+      camerasDetection: camerasDetection,
       selectedTelemetryCopilot: [],
       selectedTelemetry: [],
       sidebarOpen: true,
       telemetry: {} as TelemetryPayload,
       icebergCalculationData: {
         icebergDepth: 0,
+        icebergHeading: 0,
+        icebergLatitude: 0,
+        icebergLongitude: 0,
         platformData: [
           {
             id: 1,
-            name: 'Platform 1',
-            latitude: 0,
-            longitude: 0,
-            oceanDepth: 0,
+            name: 'Hibernia',
+            latitude: 46.7504,
+            longitude: -48.7819,
+            oceanDepth: 78,
             generalThreatLevel: ThreatLevel.UNKNOWN,
             subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
           },
           {
             id: 2,
-            name: 'Platform 2',
-            latitude: 0,
-            longitude: 0,
-            oceanDepth: 0,
+            name: 'Sea Rose',
+            latitude: 46.7895,
+            longitude: -48.146,
+            oceanDepth: 107,
             generalThreatLevel: ThreatLevel.UNKNOWN,
             subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
           },
           {
             id: 3,
-            name: 'Platform 3',
-            latitude: 0,
-            longitude: 0,
-            oceanDepth: 0,
+            name: 'Terra Nova',
+            latitude: 46.4,
+            longitude: -48.4,
+            oceanDepth: 91,
             generalThreatLevel: ThreatLevel.UNKNOWN,
             subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
           },
           {
             id: 4,
-            name: 'Platform 4',
-            latitude: 0,
-            longitude: 0,
-            oceanDepth: 0,
+            name: 'Hebron',
+            latitude: 46.544,
+            longitude: -48.518,
+            oceanDepth: 93,
             generalThreatLevel: ThreatLevel.UNKNOWN,
             subsurfaceThreatLevel: ThreatLevel.UNKNOWN,
           },
@@ -87,29 +94,33 @@ export const AppStateProvider = ({
       },
       settings: {
         networkSettings: {
-          wsBaseUrl: 'ws://localhost:50000',
+          wsBaseUrl: import.meta.env.VITE_WS_SERVER_URL || 'ws://localhost:50000',
+          photogrammetryApiUrl: '/photogrammetry-api',
+          detectionApiUrl: '/detection-api',
         },
       },
     };
   });
 
   // Action dispatchers with logging
-  const toggleCamera = useCallback((cameraId: number) => {
-    console.log('[AppStateProvider] Toggling camera:', cameraId);
-    dispatch({ type: 'TOGGLE_CAMERA', cameraId });
+  const toggleCamera = useCallback((cameraId: number, isCopilot: boolean) => {
+    dispatch({ type: 'TOGGLE_CAMERA', cameraId, isCopilot });
   }, []);
 
-  const setCameraRecording = useCallback((cameraId: number, isRecording: boolean) => {
-    console.log(`[AppStateProvider] Set camera recording: ${cameraId} = ${isRecording}`);
-    dispatch({ type: 'SET_CAMERA_RECORDING', cameraId, isRecording });
-  }, []);
+  const setCameraRecording = useCallback(
+    (cameraId: number, isRecording: boolean, isCopilot: boolean) => {
+      dispatch({ type: 'SET_CAMERA_RECORDING', cameraId, isRecording, isCopilot });
+    },
+    [],
+  );
 
   const updateCameraStatus = useCallback(
     (
       cameraId: number,
       connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected',
+      isCopilot: boolean,
     ) => {
-      dispatch({ type: 'UPDATE_CAMERA_STATUS', cameraId, connectionStatus });
+      dispatch({ type: 'UPDATE_CAMERA_STATUS', cameraId, connectionStatus, isCopilot });
     },
     [],
   );
@@ -130,12 +141,10 @@ export const AppStateProvider = ({
   );
 
   const setSidebarOpen = useCallback((open: boolean) => {
-    console.log('[AppStateProvider] Set sidebar open:', open);
     dispatch({ type: 'SET_SIDEBAR_OPEN', open });
   }, []);
 
   const updateCameraState = useCallback((configs: CameraConfig[]) => {
-    console.log(`[AppStateProvider] Initialising camera configs:`, configs);
     dispatch({ type: 'INITIALIZE_CAMERAS', configs });
   }, []);
 
@@ -148,6 +157,18 @@ export const AppStateProvider = ({
       return true;
     },
     [state.selectedTelemetryCopilot, state.selectedTelemetry],
+  );
+
+  const canSelectMoreCameras = useCallback(
+    (isCopilot: boolean) => {
+      if (isCopilot) {
+        return true;
+      } else {
+        const selectedCameras = Object.values(state.camerasDetection).filter((c) => c.enabled);
+        return selectedCameras.length < 1; // Limit to 1 detection camera
+      }
+    },
+    [state.camerasDetection],
   );
 
   const updateTelemetry = useCallback((payload: TelemetryPayload) => {
@@ -165,7 +186,8 @@ export const AppStateProvider = ({
   const contextValue = useMemo<AppStateContextValue>(
     () => ({
       state,
-      cameraConfigs: stableCameraConfigs,
+      copilotCameraConfigs: stableCameraConfigs,
+      detectionCameraConfigs: stableCameraConfigs,
       toggleCamera,
       setCameraRecording,
       updateCameraStatus,
@@ -176,6 +198,7 @@ export const AppStateProvider = ({
       updateIcebergCalculationData,
       updateCameraState,
       updateFloatFile,
+      canSelectMoreCameras,
     }),
     [
       state,
@@ -190,6 +213,7 @@ export const AppStateProvider = ({
       updateIcebergCalculationData,
       updateCameraState,
       updateFloatFile,
+      canSelectMoreCameras,
     ],
   );
 

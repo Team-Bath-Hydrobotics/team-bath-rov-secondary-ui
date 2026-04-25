@@ -1,7 +1,7 @@
 import { Box, Button } from '@mui/material';
 import { useState, useMemo } from 'react';
 import { ImageTile } from '../Tiles/ImageTile';
-import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 

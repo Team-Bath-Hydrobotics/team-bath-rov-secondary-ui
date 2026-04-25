@@ -2,13 +2,16 @@ import type { CameraConfig, CameraStateMap } from './camera.types';
 import type { TelemetryDataPoint } from './constants';
 import type { TelemetryFieldId } from './telemetry.types';
 import type { IcebergCalculationData } from './platform.type';
-import type { AppSettings } from './appsettings.types';
+import type { SettingsState } from './settings.types';
 import type { FloatFile } from './float.types';
 export type TelemetryPayload = Record<TelemetryFieldId, TelemetryDataPoint>;
 
 export interface AppState {
-  /** Map of camera ID → camera state (enabled, recording, etc.) */
-  cameras: CameraStateMap;
+  /** Map of camera ID → camera state (enabled, recording, etc.) for co pilot page*/
+  camerasCopilot: CameraStateMap;
+
+  /** Map of camera ID → camera state (enabled, recording, etc.) for detection page */
+  camerasDetection: CameraStateMap;
 
   /** Array of currently selected telemetry field IDs (max 3) */
   selectedTelemetryCopilot: TelemetryFieldId[];
@@ -28,7 +31,7 @@ export interface AppState {
   //** Float File */
   floatFile: FloatFile;
 
-  settings: AppSettings;
+  settings: SettingsState;
 }
 
 /**
@@ -43,19 +46,23 @@ export interface AppStateContextValue {
   /** Current state (read-only, modify through actions) */
   state: AppState;
 
-  /** Available camera configurations */
-  cameraConfigs: CameraConfig[];
+  /** Available copilot camera configurations */
+  copilotCameraConfigs: CameraConfig[];
+
+  /** Available detection camera configurations */
+  detectionCameraConfigs: CameraConfig[];
 
   /** Toggle a camera on/off */
-  toggleCamera: (cameraId: number) => void;
+  toggleCamera: (cameraId: number, isCopilot: boolean) => void;
 
   /** Set whether a camera is recording */
-  setCameraRecording: (cameraId: number, isRecording: boolean) => void;
+  setCameraRecording: (cameraId: number, isRecording: boolean, isCopilot: boolean) => void;
 
   /** Update camera connection status */
   updateCameraStatus: (
     cameraId: number,
     connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected',
+    isCopilot: boolean,
   ) => void;
 
   /**
@@ -78,6 +85,9 @@ export interface AppStateContextValue {
 
   /** Update float csv file */
   updateFloatFile: (file: FloatFile) => void;
+
+  /** Computed value: can the user select more cameras? */
+  canSelectMoreCameras: (isCopilot: boolean) => boolean;
 }
 
 /**
@@ -90,12 +100,13 @@ export interface AppStateContextValue {
  *   dispatch({ type: 'TOGGLE_CAMERA', cameraId: 'front' })
  */
 export type AppStateAction =
-  | { type: 'TOGGLE_CAMERA'; cameraId: number }
-  | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean }
+  | { type: 'TOGGLE_CAMERA'; cameraId: number; isCopilot?: boolean }
+  | { type: 'SET_CAMERA_RECORDING'; cameraId: number; isRecording: boolean; isCopilot?: boolean }
   | {
       type: 'UPDATE_CAMERA_STATUS';
       cameraId: number;
       connectionStatus: 'connecting' | 'connected' | 'failed' | 'disconnected';
+      isCopilot?: boolean;
     }
   | { type: 'TOGGLE_TELEMETRY'; fieldId: TelemetryFieldId; isCopilot?: boolean }
   | { type: 'SET_SIDEBAR_OPEN'; open: boolean }

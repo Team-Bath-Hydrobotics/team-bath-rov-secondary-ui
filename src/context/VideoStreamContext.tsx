@@ -1,7 +1,12 @@
 import { createContext, useContext } from 'react';
 
 interface VideoStreamContextValue {
-  registerCamera: (cameraId: number, canvas: HTMLCanvasElement | null) => void;
+  registerCamera: (cameraId: number, canvas: HTMLCanvasElement | null, isCopilot: boolean) => void;
+  registerFrameCallback: (
+    cameraId: number,
+    isCopilot: boolean,
+    callback: ((canvas: HTMLCanvasElement) => void) | null,
+  ) => void;
 }
 
 export const VideoStreamContext = createContext<VideoStreamContextValue | undefined>(undefined);

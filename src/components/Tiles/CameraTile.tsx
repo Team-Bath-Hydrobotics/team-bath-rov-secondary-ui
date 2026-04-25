@@ -7,12 +7,17 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { useVideoStreamContext } from '../../context/VideoStreamContext';
 import { useAppStateContext } from '../../context';
 import { useCanvasRecorder } from '../../hooks/useCanvasRecorder';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 
 interface CameraTileProps {
   cameraId: number;
   name: string;
   enabled: boolean;
   isRecording: boolean;
+  isCopilot: boolean; // Indicates whether this tile is for CoPilot or Detection
+  /** Optional ref for an overlay canvas drawn on top of the video feed */
+  overlayCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  handleDetection?: (frame: string) => Promise<void>;
 }
 
 /**
@@ -20,92 +25,91 @@ interface CameraTileProps {
  * Shows greyed-out state when disabled, recording indicator when active.
  */
 export const CameraTile = React.memo(
-  ({ cameraId, name, enabled, isRecording }: CameraTileProps) => {
-    const { registerCamera } = useVideoStreamContext();
+  ({
+    cameraId,
+    name,
+    enabled,
+    isRecording,
+    isCopilot,
+    overlayCanvasRef,
+    handleDetection,
+  }: CameraTileProps) => {
+    const { registerCamera, registerFrameCallback } = useVideoStreamContext();
     const { state, setCameraRecording } = useAppStateContext();
-    const cameraStatus = state.cameras[cameraId]?.connectionStatus || 'disconnected';
+    const cameraStatus = isCopilot
+      ? state.camerasCopilot[cameraId]?.connectionStatus
+      : state.camerasDetection[cameraId]?.connectionStatus || 'disconnected';
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { isProcessing, startRecording, stopRecording } = useCanvasRecorder(name);
     const isConnected = cameraStatus === 'connected';
 
     useEffect(() => {
       if (enabled && canvasRef.current) {
-        registerCamera(cameraId, canvasRef.current);
+        registerCamera(cameraId, canvasRef.current, isCopilot);
       }
 
       return () => {
-        registerCamera(cameraId, null);
+        registerCamera(cameraId, null, isCopilot);
       };
-    }, [cameraId, enabled, registerCamera]);
+    }, [cameraId, enabled, isCopilot, registerCamera]);
 
-    // TODO: Remove — test pattern for development without a live camera stream.
-    // Uses a separate overlay canvas because JSMpeg claims a WebGL context on
-    // canvasRef, making getContext('2d') return null on the same element.
-    const testCanvasRef = useRef<HTMLCanvasElement>(null);
-    const showTestCanvas = enabled && !isConnected;
-    const animateTestPattern = showTestCanvas && !isProcessing;
-
+    const lastFrameRef = useRef<string | null>(null);
     useEffect(() => {
-      if (!animateTestPattern || !testCanvasRef.current) return;
+      if (!enabled || !handleDetection) return;
 
-      const canvas = testCanvasRef.current;
-      canvas.width = 640;
-      canvas.height = 360;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      registerFrameCallback(cameraId, isCopilot, (canvas) => {
+        // JSMpeg just decoded a frame - capture it while still in CPU memory
+        const offscreen = document.createElement('canvas');
+        offscreen.width = canvas.width;
+        offscreen.height = canvas.height;
+        const ctx = offscreen.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(canvas, 0, 0);
+        const dataUrl = offscreen.toDataURL('image/jpeg', 0.8);
+        const base64 = dataUrl.split(',')[1];
+        if (base64) lastFrameRef.current = base64;
+      });
 
-      let frame = 0;
-      const intervalId = setInterval(() => {
-        frame++;
-        ctx.fillStyle = `hsl(${(frame * 3) % 360}, 70%, 40%)`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Grid lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 1;
-        for (let x = 0; x < canvas.width; x += 40) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, canvas.height);
-          ctx.stroke();
-        }
-        for (let y = 0; y < canvas.height; y += 40) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(canvas.width, y);
-          ctx.stroke();
-        }
-
-        // Label
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 28px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(`TEST — ${name}`, canvas.width / 2, canvas.height / 2 - 20);
-        ctx.font = '20px monospace';
-        ctx.fillText(`Frame ${frame}`, canvas.width / 2, canvas.height / 2 + 20);
-
-        // Timestamp
-        ctx.font = '14px monospace';
-        ctx.textAlign = 'right';
-        ctx.fillText(new Date().toLocaleTimeString(), canvas.width - 12, canvas.height - 12);
-      }, 100);
-
-      return () => clearInterval(intervalId);
-    }, [animateTestPattern, name]);
+      return () => {
+        registerFrameCallback(cameraId, isCopilot, null);
+      };
+    }, [cameraId, enabled, isCopilot, registerFrameCallback, overlayCanvasRef, handleDetection]);
 
     const handleRecordToggle = useCallback(async () => {
       if (isRecording) {
         await stopRecording();
-        setCameraRecording(cameraId, false);
+        setCameraRecording(cameraId, false, isCopilot);
       } else {
-        // TODO: Restore to just `canvasRef.current` after removing test pattern
-        const canvas = testCanvasRef.current ?? canvasRef.current;
+        const canvas = canvasRef.current;
         if (canvas) {
           startRecording(canvas);
-          setCameraRecording(cameraId, true);
+          setCameraRecording(cameraId, true, isCopilot);
         }
       }
-    }, [isRecording, cameraId, setCameraRecording, startRecording, stopRecording]);
+    }, [isRecording, cameraId, setCameraRecording, startRecording, stopRecording, isCopilot]);
+
+    const getCurrentFrame = useCallback((): string | null => {
+      const canvas = canvasRef.current;
+      if (!canvas || canvas.width === 0 || canvas.height === 0) return null;
+
+      try {
+        // Copy to a fresh 2D canvas to ensure pixel data is readable
+        const offscreen = document.createElement('canvas');
+        offscreen.width = canvas.width;
+        offscreen.height = canvas.height;
+        const ctx = offscreen.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(canvas, 0, 0);
+
+        const dataUrl = offscreen.toDataURL('image/jpeg', 0.8);
+        if (dataUrl === 'data:,' || dataUrl === 'data:image/png;base64,') return null;
+        const base64 = dataUrl.split(',')[1];
+        return base64 ?? null;
+      } catch (err) {
+        console.warn('[CameraTile] Failed to capture frame:', err);
+        return null;
+      }
+    }, []);
 
     return (
       <Paper
@@ -121,23 +125,7 @@ export const CameraTile = React.memo(
           transition: 'opacity 0.3s, filter 0.3s',
         }}
       >
-        {/* TODO: Remove — test pattern overlay canvas */}
-        {showTestCanvas && (
-          <canvas
-            ref={testCanvasRef}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              zIndex: 1,
-            }}
-          />
-        )}
-
-        {}
-        {cameraStatus === 'failed' && !showTestCanvas && (
+        {cameraStatus === 'failed' && (
           <Box
             sx={{
               position: 'absolute',
@@ -158,15 +146,30 @@ export const CameraTile = React.memo(
           </Box>
         )}
         {enabled ? (
-          <canvas
-            ref={canvasRef}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              backgroundColor: '#000',
-            }}
-          />
+          <>
+            <canvas
+              ref={canvasRef}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                backgroundColor: '#000',
+              }}
+            />
+            {overlayCanvasRef && (
+              <canvas
+                ref={overlayCanvasRef}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
+          </>
         ) : (
           <Box
             sx={{
@@ -189,16 +192,12 @@ export const CameraTile = React.memo(
             </Typography>
           </Box>
         )}
-
-        {/* Recording status overlay */}
         {enabled && <RecordingStatus isRecording={isRecording} />}
 
-        {/* Record / Stop button */}
         {enabled && (
           <IconButton
             onClick={handleRecordToggle}
-            // TODO: Restore to `disabled={!isConnected || isProcessing}` after testing
-            disabled={isProcessing}
+            disabled={!isConnected || isProcessing}
             size="small"
             sx={{
               position: 'absolute',
@@ -220,6 +219,39 @@ export const CameraTile = React.memo(
               <StopIcon sx={{ fontSize: 20 }} />
             ) : (
               <FiberManualRecordIcon sx={{ fontSize: 20, color: 'error.main' }} />
+            )}
+          </IconButton>
+        )}
+        {enabled && handleDetection && (
+          <IconButton
+            onClick={() => {
+              const frame = getCurrentFrame();
+              if (frame && handleDetection) {
+                handleDetection(frame);
+              }
+            }}
+            disabled={!isConnected || isProcessing}
+            size="small"
+            sx={{
+              position: 'absolute',
+              bottom: 8,
+              left: 8,
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              color: 'white',
+              zIndex: 2,
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' },
+              '&.Mui-disabled': {
+                color: 'rgba(255, 255, 255, 0.3)',
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              },
+            }}
+          >
+            {isProcessing ? (
+              <CircularProgress size={20} sx={{ color: 'white' }} />
+            ) : isRecording ? (
+              <StopIcon sx={{ fontSize: 20 }} />
+            ) : (
+              <LocationSearchingIcon sx={{ fontSize: 20, color: 'error.main' }} />
             )}
           </IconButton>
         )}

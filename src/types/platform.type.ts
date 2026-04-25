@@ -1,8 +1,8 @@
 export const ThreatLevel = {
-  UNKNOWN: 'Unknown',
-  LOW: 'Low',
-  MEDIUM: 'Medium',
-  HIGH: 'High',
+  UNKNOWN: 'UNKNOWN',
+  GREEN: 'GREEN',
+  YELLOW: 'YELLOW',
+  RED: 'RED',
 } as const;
 
 export type ThreatLevelType = (typeof ThreatLevel)[keyof typeof ThreatLevel];
@@ -23,6 +23,9 @@ export type PlatformData = {
 
 export type IcebergCalculationData = {
   icebergDepth: number;
+  icebergHeading: number;
+  icebergLatitude: number;
+  icebergLongitude: number;
   platformData: PlatformData[];
   imageFile: File | null;
 };

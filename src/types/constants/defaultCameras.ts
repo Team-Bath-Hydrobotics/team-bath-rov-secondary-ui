@@ -3,7 +3,6 @@ import type { CameraConfig } from '../camera.types';
 /**
  * Default camera configurations for the ROV.
  *
- * These can be overridden by passing different configs to the CoPilotProvider.
  * The IDs should match what the video streaming system uses.
  */
 export const DEFAULT_CAMERAS: CameraConfig[] = [

@@ -8,3 +8,4 @@ export {
   generateManualCAD,
   getModelUrl,
 } from './photogrammetry';
+export { getDetections, getModel } from './crab_detection';
