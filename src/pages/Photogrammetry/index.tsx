@@ -468,6 +468,24 @@ const PhotogrammetryContent = () => {
                 ) : null}
                 Estimate Height
               </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleNewJob}
+                disabled={jobId === null}
+                sx={{
+                  mt: 1,
+                  textTransform: 'none',
+                  color: 'grey.300',
+                  borderColor: 'grey.400',
+                  '&.Mui-disabled': {
+                    color: 'grey.500',
+                    borderColor: 'grey.600',
+                  },
+                }}
+              >
+                Start New Job
+              </Button>
             </Paper>
 
             {progressText && (
@@ -488,17 +506,6 @@ const PhotogrammetryContent = () => {
               </Paper>
             )}
           </HorizontalPageContentLayout>
-
-          {(reconstructionStatus === 'complete' || reconstructionStatus === 'error') && (
-            <Button
-              variant="text"
-              size="small"
-              onClick={handleNewJob}
-              sx={{ textTransform: 'none' }}
-            >
-              Start New Job
-            </Button>
-          )}
         </VerticalPageContentLayout>
         <VerticalPageContentLayout>
           <Paper
