@@ -1,0 +1,1 @@
+export { ThreatChip } from './ThreatChip';

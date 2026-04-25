@@ -1,7 +1,7 @@
 import { Box, Button } from '@mui/material';
 import { FileUpload } from '@mui/icons-material';
 import { useRef } from 'react';
-import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout';
 
 interface UploadComponentProps {
   buttonText: string;

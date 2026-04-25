@@ -39,9 +39,10 @@ npm run dev
 
 The dev server starts at `http://localhost:5173`.
 
-### Connecting to the backend
+### Connecting to the photogrammetry backend
 
-The Vite dev server proxies all `/api/*` requests to `http://localhost:8100`, where the [photogrammetry backend](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/photogrammetry-backend) runs. To use backend features locally, start both servers:
+You will need to add a .env file at the repo root with the following `VITE_PHOTOGRAMMETRY_API_URL=http://localhost:8100` or equivalent otherwise the default url of `http://localhost:8100` will be used.
+The Vite dev server proxies all `/photogrammetry-api*` requests to the target env url or defaults to `http://localhost:8100` via vite.config.ts, where the [photogrammetry backend](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/photogrammetry-backend) runs. To use backend features locally, start both servers:
 
 1. **Terminal 1** — backend:
     ```bash
@@ -67,6 +68,35 @@ The Vite dev server proxies all `/api/*` requests to `http://localhost:8100`, wh
 └─────────────────────────────┘       └──────────────────────────┘
 ```
 
+### Connecting to the crab_detection backend
+
+You will need to add a .env file at the repo root with the following `VITE_DETECTION_API_URL=http://localhost:8000` or equivalent otherwise the default url of `http://localhost:8000` will be used.
+The Vite dev server proxies all `/detection-api*` requests to the target env url or defaults to `http://localhost:8000` via vite.config.ts, where the [crab detection backend](https://team-bath-hydrobotics-f1fbb4.netlify.app/projects/crab-detection/crab-detection/) runs. To use backend features locally, start both servers:
+
+1. **Terminal 1** — backend:
+    ```bash
+    cd team-bath-rov-software/machine-learning/crab_detection
+    poetry install
+    poetry run uvicorn api.main:app --reload
+    ```
+
+2. **Terminal 2** — UI:
+    ```bash
+    cd team-bath-rov-secondary-ui/ui
+    npm install
+    npm run dev
+    ```
+
+```
+┌─────────────────────────────┐       ┌──────────────────────────┐
+│  team-bath-rov-secondary-ui │       │ team-bath-rov-software   │
+│  (Vite + React)             │       │                          │
+│                             │  /api │  crab_detection-backend  │
+│  localhost:5173  ───────────┼──────>│  localhost:8000          │
+│                             │ proxy │                          │
+└─────────────────────────────┘       └──────────────────────────┘
+```
+
 ### MQTT telemetry
 
 To connect to the telemetry broker add the following in an `.env` file at the project root:
@@ -80,6 +110,7 @@ VITE_MQTT_PASSWORD=<Find in teams>
 # Folder Structure
 ```
 ui/
+├─  api/
 ├─  app/
 ├─  assets/
 ├─ components/

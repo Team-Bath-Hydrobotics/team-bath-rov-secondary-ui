@@ -19,7 +19,7 @@ import { UploadComponent } from '../../components/Inputs';
 import { ModelViewer } from '../../components/Tiles';
 import type { ReconstructionStatus } from '../../types';
 import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
-import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout';
 import { Carousel } from '../../components/Carousel/Carousel';
 import {
   createJob,
@@ -30,6 +30,7 @@ import {
   generateManualCAD,
   getModelUrl,
 } from '../../api';
+import { useAppStateContext } from '../../context';
 
 const POLL_INTERVAL_MS = 2000;
 const STORAGE_KEY = 'photogrammetry_job_id';
@@ -37,6 +38,7 @@ const STORAGE_KEY = 'photogrammetry_job_id';
 type Mode = 'photogrammetry' | 'manual-cad';
 
 const PhotogrammetryContent = () => {
+  const { state } = useAppStateContext();
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [folderPath, setFolderPath] = useState('');
   const [estimatedCoralHeight, setEstimatedCoralHeight] = useState<number | null>(null);
@@ -49,6 +51,7 @@ const PhotogrammetryContent = () => {
   const [stage, setStage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const photogrammetryApiUrl = state.settings.networkSettings.photogrammetryApiUrl;
   const [mode, setMode] = useState<Mode>('photogrammetry');
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -65,7 +68,7 @@ const PhotogrammetryContent = () => {
       stopPolling();
       pollingRef.current = setInterval(async () => {
         try {
-          const job = await getJob(id);
+          const job = await getJob(photogrammetryApiUrl, id);
           setProgress(job.progress);
           setStage(job.stage);
 
@@ -88,7 +91,7 @@ const PhotogrammetryContent = () => {
         }
       }, POLL_INTERVAL_MS);
     },
-    [stopPolling],
+    [stopPolling, photogrammetryApiUrl],
   );
 
   // Restore persisted job on mount
@@ -100,7 +103,7 @@ const PhotogrammetryContent = () => {
 
     const restoreJob = async () => {
       try {
-        const job = await getJob(savedJobId);
+        const job = await getJob(photogrammetryApiUrl, savedJobId);
         if (cancelled) return;
 
         setJobId(savedJobId);
@@ -195,10 +198,10 @@ const PhotogrammetryContent = () => {
     setModelUrl(null);
 
     try {
-      const job = await createJob();
+      const job = await createJob(photogrammetryApiUrl);
       persistJobId(job.id);
-      await uploadImages(job.id, uploadedImages);
-      await runPhotogrammetry(job.id);
+      await uploadImages(photogrammetryApiUrl, job.id, uploadedImages);
+      await runPhotogrammetry(photogrammetryApiUrl, job.id, { skipUndistort: false });
       startPolling(job.id);
     } catch (err) {
       setReconstructionStatus('error');
@@ -206,7 +209,7 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [uploadedImages, startPolling, persistJobId]);
+  }, [uploadedImages, startPolling, persistJobId, photogrammetryApiUrl]);
 
   const handleRetryWithoutUndistort = useCallback(async () => {
     if (!jobId) return;
@@ -218,7 +221,7 @@ const PhotogrammetryContent = () => {
     setModelUrl(null);
 
     try {
-      await runPhotogrammetry(jobId, { skipUndistort: true });
+      await runPhotogrammetry(photogrammetryApiUrl, jobId, { skipUndistort: true });
       startPolling(jobId);
     } catch (err) {
       setReconstructionStatus('error');
@@ -226,7 +229,7 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [jobId, startPolling]);
+  }, [jobId, startPolling, photogrammetryApiUrl]);
 
   const handleScale = useCallback(async () => {
     if (!jobId || trueCoralLength === null) return;
@@ -234,14 +237,14 @@ const PhotogrammetryContent = () => {
     setError(null);
 
     try {
-      const result = await estimateScale(jobId, trueCoralLength);
+      const result = await estimateScale(photogrammetryApiUrl, jobId, trueCoralLength);
       setEstimatedCoralHeight(result.estimated_height_cm);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Scaling failed');
     } finally {
       setLoading(false);
     }
-  }, [jobId, trueCoralLength]);
+  }, [jobId, trueCoralLength, photogrammetryApiUrl]);
 
   const handleManualCAD = useCallback(async () => {
     if (trueCoralLength === null) return;
@@ -250,9 +253,14 @@ const PhotogrammetryContent = () => {
     setReconstructionStatus('processing');
 
     try {
-      const job = await createJob();
+      const job = await createJob(photogrammetryApiUrl);
       persistJobId(job.id);
-      const result = await generateManualCAD(job.id, estimatedCoralHeight ?? 20, trueCoralLength);
+      const result = await generateManualCAD(
+        photogrammetryApiUrl,
+        job.id,
+        estimatedCoralHeight ?? 20,
+        trueCoralLength,
+      );
       setModelUrl(result.output_url);
       setReconstructionStatus('complete');
     } catch (err) {
@@ -261,7 +269,7 @@ const PhotogrammetryContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [trueCoralLength, estimatedCoralHeight, persistJobId]);
+  }, [trueCoralLength, estimatedCoralHeight, persistJobId, photogrammetryApiUrl]);
 
   const handleModeChange = useCallback(
     (_event: React.MouseEvent<HTMLElement>, newMode: Mode | null) => {

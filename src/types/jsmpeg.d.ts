@@ -10,6 +10,7 @@ declare module '@cycjimmy/jsmpeg-player' {
     progressive?: boolean;
     throttled?: boolean;
     chunkSize?: number;
+    webgl?: boolean;
 
     onVideoDecode?: (decoder: unknown, time: number) => void;
     onAudioDecode?: (decoder: unknown, time: number) => void;
