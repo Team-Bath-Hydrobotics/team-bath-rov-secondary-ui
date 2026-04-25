@@ -1,5 +1,8 @@
 import '@google/model-viewer';
-import { Box, Typography, CircularProgress } from '@mui/material';
+import { useRef, useCallback } from 'react';
+import { Box, IconButton, Typography, CircularProgress } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import ThreeDRotationIcon from '@mui/icons-material/ThreeDRotation';
 import CodeIcon from '@mui/icons-material/Code';
@@ -9,10 +12,38 @@ interface ModelViewerProps {
   modelUrl: string | null;
   status: ReconstructionStatus;
   estimatedHeight: number | null;
+  trueLength: number | null;
 }
 
-export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerProps) => {
+export const ModelViewer = ({
+  modelUrl,
+  status,
+  estimatedHeight,
+  trueLength,
+}: ModelViewerProps) => {
   const showModel = modelUrl && status === 'complete';
+  const viewerRef = useRef<HTMLElement>(null);
+
+  const handleZoom = useCallback((direction: 'in' | 'out') => {
+    const viewer = viewerRef.current as
+      | (HTMLElement & {
+          getCameraOrbit: () => {
+            theta: number;
+            phi: number;
+            radius: number;
+            toString: () => string;
+          };
+          cameraOrbit: string;
+          getMinimumFieldOfView: () => string;
+        })
+      | null;
+    if (!viewer) return;
+
+    const orbit = viewer.getCameraOrbit();
+    const factor = direction === 'in' ? 0.75 : 1.33;
+    orbit.radius *= factor;
+    viewer.cameraOrbit = orbit.toString();
+  }, []);
 
   const getStatusText = () => {
     switch (status) {
@@ -29,33 +60,93 @@ export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerPr
 
   if (showModel) {
     return (
-      <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 400 }}>
+      <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 600 }}>
         <model-viewer
+          ref={viewerRef}
           src={modelUrl}
           alt="Coral 3D model"
           camera-controls
           auto-rotate
           shadow-intensity="1"
           environment-image="neutral"
-          style={{ width: '100%', height: '100%', minHeight: 400 }}
+          min-camera-orbit="auto auto 0%"
+          max-camera-orbit="auto auto Infinity"
+          scroll-sensitivity="3"
+          style={{ width: '100%', height: '100%', minHeight: 600 }}
         />
-        {estimatedHeight !== null && (
-          <Typography
-            variant="h5"
-            fontWeight={700}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}
+        >
+          <IconButton
+            onClick={() => handleZoom('in')}
+            sx={{
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              color: 'white',
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)' },
+            }}
+          >
+            <AddIcon />
+          </IconButton>
+          <IconButton
+            onClick={() => handleZoom('out')}
+            sx={{
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              color: 'white',
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)' },
+            }}
+          >
+            <RemoveIcon />
+          </IconButton>
+        </Box>
+        {(estimatedHeight !== null || trueLength !== null) && (
+          <Box
             sx={{
               position: 'absolute',
               top: 16,
               right: 24,
-              color: 'text.primary',
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0.5,
             }}
           >
-            Height: {estimatedHeight}cm
-          </Typography>
+            {trueLength !== null && (
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={{
+                  color: 'text.primary',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                }}
+              >
+                Length: {trueLength}cm
+              </Typography>
+            )}
+            {estimatedHeight !== null && (
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={{
+                  color: 'text.primary',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                }}
+              >
+                Height: {estimatedHeight}cm
+              </Typography>
+            )}
+          </Box>
         )}
       </Box>
     );
@@ -70,7 +161,7 @@ export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerPr
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
-        minHeight: 400,
+        minHeight: 600,
         backgroundColor: 'rgba(128, 128, 128, 0.15)',
         borderRadius: 2,
       }}
@@ -80,14 +171,28 @@ export const ModelViewer = ({ modelUrl, status, estimatedHeight }: ModelViewerPr
         <CodeIcon sx={{ fontSize: 28, color: 'text.disabled' }} />
       </Box>
 
-      {estimatedHeight !== null && (
-        <Typography
-          variant="h5"
-          fontWeight={700}
-          sx={{ position: 'absolute', top: 16, right: 24, color: 'text.primary' }}
+      {(estimatedHeight !== null || trueLength !== null) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}
         >
-          Height: {estimatedHeight}cm
-        </Typography>
+          {trueLength !== null && (
+            <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+              Length: {trueLength}cm
+            </Typography>
+          )}
+          {estimatedHeight !== null && (
+            <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+              Height: {estimatedHeight}cm
+            </Typography>
+          )}
+        </Box>
       )}
 
       {status === 'processing' ? (

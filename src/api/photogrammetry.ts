@@ -35,7 +35,9 @@ export async function uploadImages(
   const formData = new FormData();
   formData.append('job_id', jobId);
   for (const file of files) {
-    formData.append('files', file);
+    // Strip directory prefix from webkitdirectory uploads so backend saves flat
+    const name = file.name;
+    formData.append('files', file, name);
   }
   return request<UploadResponse>(baseUrl, '/api/upload', {
     method: 'POST',
@@ -43,11 +45,18 @@ export async function uploadImages(
   });
 }
 
-export async function runPhotogrammetry(baseUrl: string, jobId: string): Promise<RunResponse> {
+export async function runPhotogrammetry(
+  baseUrl: string,
+  jobId: string,
+  options?: { skipUndistort?: boolean },
+): Promise<RunResponse> {
   return request<RunResponse>(baseUrl, '/api/photogrammetry/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ job_id: jobId }),
+    body: JSON.stringify({
+      job_id: jobId,
+      ...(options?.skipUndistort && { skip_undistort: true }),
+    }),
   });
 }
 
