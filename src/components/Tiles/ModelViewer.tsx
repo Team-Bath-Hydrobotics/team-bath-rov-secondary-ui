@@ -148,7 +148,7 @@ export const ModelViewer = ({
                 Height: {estimatedHeight}cm
               </Typography>
             )}
-          </Box>
+          </Typography>
         )}
       </Box>
     );

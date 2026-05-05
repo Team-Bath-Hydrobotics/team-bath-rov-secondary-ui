@@ -4,7 +4,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import { MainContentLayout } from '../../layouts/MainContentLayout';
 import VerticalPageContentLayout from '../../layouts/VerticalPageContentLayout/VerticalPageContentLayout';
-import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout/HorizontalPageContentLayout';
+import HorizontalPageContentLayout from '../../layouts/HorizontalPageContentLayout';
 import { TextInput } from '../../components/Inputs/TextInput';
 import { FlexibleDataGrid } from '../../components/Inputs/FlexibleDataGrid';
 import type { GridColDef, GridRenderCellParams, GridValidRowModel } from '@mui/x-data-grid';
