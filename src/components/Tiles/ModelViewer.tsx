@@ -105,8 +105,10 @@ export const ModelViewer = ({
             <RemoveIcon />
           </IconButton>
         </Box>
-        {(estimatedHeight !== null || trueLength !== null) && (
-          <Box
+        {estimatedHeight !== null && (
+          <Typography
+            variant="h5"
+            fontWeight={700}
             sx={{
               position: 'absolute',
               top: 16,

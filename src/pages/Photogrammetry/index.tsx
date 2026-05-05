@@ -201,7 +201,7 @@ const PhotogrammetryContent = () => {
       const job = await createJob(photogrammetryApiUrl);
       persistJobId(job.id);
       await uploadImages(photogrammetryApiUrl, job.id, uploadedImages);
-      await runPhotogrammetry(photogrammetryApiUrl, job.id);
+      await runPhotogrammetry(photogrammetryApiUrl, job.id, { skipUndistort: false });
       startPolling(job.id);
     } catch (err) {
       setReconstructionStatus('error');
@@ -514,6 +514,17 @@ const PhotogrammetryContent = () => {
               </Paper>
             )}
           </HorizontalPageContentLayout>
+
+          {(reconstructionStatus === 'complete' || reconstructionStatus === 'error') && (
+            <Button
+              variant="text"
+              size="small"
+              onClick={handleNewJob}
+              sx={{ textTransform: 'none' }}
+            >
+              Start New Job
+            </Button>
+          )}
         </VerticalPageContentLayout>
         <VerticalPageContentLayout>
           <Paper

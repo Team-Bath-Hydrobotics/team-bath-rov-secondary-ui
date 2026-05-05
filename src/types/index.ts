@@ -30,6 +30,14 @@ export type { AppState, AppStateContextValue, AppStateAction, TelemetryPayload }
 // eDNA Calculator types
 export type { SpeciesEntry, EdnaCalculatorState } from './edna.types';
 
+// Session config types
+export type {
+  SessionConfig,
+  SessionEvent,
+  SessionMission,
+  SessionTaskAssignment,
+} from './session.types';
+
 // Photogrammetry types
 export type {
   ReconstructionStatus,

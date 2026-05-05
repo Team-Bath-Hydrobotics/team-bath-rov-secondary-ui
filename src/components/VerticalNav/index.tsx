@@ -7,6 +7,7 @@ import AcUnitIcon from '@mui/icons-material/AcUnit';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import WaterIcon from '@mui/icons-material/Water';
+import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
 import type { ReactElement } from 'react';
 
 interface VerticalNavProps {
@@ -15,6 +16,7 @@ interface VerticalNavProps {
 
 export function VerticalNav({ collapsed }: VerticalNavProps) {
   const pages = [
+    { key: 'session-config', label: 'Session Config', icon: 'session-config' },
     { key: 'copilot', label: 'CoPilot', icon: 'pilot' },
     { key: 'telemetry', label: 'Telemetry', icon: 'telemetry' },
     { key: 'detection', label: 'Crab Detection', icon: 'detection' },
@@ -24,6 +26,7 @@ export function VerticalNav({ collapsed }: VerticalNavProps) {
     { key: 'float', label: 'Float', icon: 'float' },
   ];
   const iconMap: Record<string, ReactElement> = {
+    'session-config': <SettingsInputComponentIcon />,
     pilot: <SportsEsportsIcon />,
     telemetry: <TrendingUpIcon />,
     detection: <VisibilityIcon />,
