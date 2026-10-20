@@ -1,21 +1,25 @@
 import { type ReactNode, useEffect, useRef, useCallback, useMemo } from 'react';
+import JSMpeg from '@cycjimmy/jsmpeg-player';
 import { VideoStreamContext } from '../context/VideoStreamContext';
 import { useAppStateContext } from '../context/AppStateContext';
-import JSMpeg from '@cycjimmy/jsmpeg-player';
 
 interface VideoStreamProviderProps {
   children: ReactNode;
 }
 
-type WSHandle = {
-  player: { destroy: () => void };
+type JSMpegPlayer = {
+  destroy: () => void;
+};
+
+type PlayerHandle = {
+  player: JSMpegPlayer;
 };
 
 export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
   const canvasRefs = useRef(new Map<string, HTMLCanvasElement>());
-  const sockets = useRef(new Map<string, WSHandle>());
-  const frameCallbacks = useRef(new Map<string, (canvas: HTMLCanvasElement) => void>());
+  const players = useRef(new Map<string, PlayerHandle>());
   const isInitializing = useRef(new Set<string>());
+  const frameCallbacks = useRef(new Map<string, ((canvas: HTMLCanvasElement) => void) | null>());
 
   const pendingCanvas = useRef(new Map<string, HTMLCanvasElement>());
 
@@ -40,7 +44,7 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
   }, [state.settings.networkSettings.wsBaseUrl]);
 
   const cleanupSocket = (key: string, cameraId: number, isCopilot: boolean) => {
-    const existing = sockets.current.get(key);
+    const existing = players.current.get(key);
     if (!existing) return;
 
     try {
@@ -49,8 +53,7 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
       console.warn(`Error destroying player for ${key}`);
     }
 
-    sockets.current.delete(key);
-    frameCallbacks.current.delete(key);
+    players.current.delete(key);
     updateCameraStatusRef.current(cameraId, 'disconnected', isCopilot);
   };
 
@@ -63,11 +66,13 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
 
       cleanupSocket(key, cameraId, isCopilot);
 
-      const basePort = parseInt(wsBaseUrlRef.current.split(':').pop() || '8081', 10);
-
-      // The video processor assigns stream ports as base_port + stream_id.
-      // Camera IDs are the stream IDs (1-based), so camera 1 uses base + 1.
-      const wsUrl = `ws://localhost:${basePort + cameraId}`;
+      const configuredUrl = new URL(wsBaseUrlRef.current);
+      const basePort = Number(configuredUrl.port || (configuredUrl.protocol === 'wss:' ? 443 : 80));
+      configuredUrl.port = String(basePort + cameraId);
+      configuredUrl.pathname = '/';
+      configuredUrl.search = '';
+      configuredUrl.hash = '';
+      const wsUrl = configuredUrl.toString();
 
       updateCameraStatusRef.current(cameraId, 'connecting', isCopilot);
 
@@ -81,39 +86,20 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
         isInitializing.current.delete(key);
       };
 
-      const markFailed = () => {
-        if (statusUpdated) return;
-        statusUpdated = true;
+      const player = new JSMpeg.Player(wsUrl, {
+        canvas,
+        autoplay: true,
+        audio: false,
+        videoBufferSize: 512 * 1024,
+        preserveDrawingBuffer: true,
+        onSourceEstablished: markConnected,
+        onVideoDecode: () => {
+          markConnected();
+          frameCallbacks.current.get(key)?.(canvas);
+        },
+      });
 
-        updateCameraStatusRef.current(cameraId, 'failed', isCopilot);
-        cleanupSocket(key, cameraId, isCopilot);
-        isInitializing.current.delete(key);
-      };
-
-      try {
-        const player = new JSMpeg.Player(wsUrl, {
-          canvas,
-          autoplay: true,
-          audio: false,
-          preserveDrawingBuffer: true,
-          videoBufferSize: 512 * 1024,
-          onSourceEstablished: markConnected,
-          onSourceCompleted: () => {
-            if (!statusUpdated) markFailed();
-            else updateCameraStatusRef.current(cameraId, 'disconnected', isCopilot);
-            isInitializing.current.delete(key);
-          },
-          onVideoDecode: () => {
-            const callback = frameCallbacks.current.get(key);
-            if (callback) callback(canvas);
-          },
-        });
-
-        sockets.current.set(key, { player });
-      } catch (error) {
-        console.warn(`Failed to start MPEG-TS player for ${key}`, error);
-        markFailed();
-      }
+      players.current.set(key, { player });
 
       setTimeout(() => {
         isInitializing.current.delete(key);
@@ -148,13 +134,13 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
   );
 
   useEffect(() => {
-    const socketsMap = sockets.current;
+    const playersMap = players.current;
     const canvasMap = canvasRefs.current;
 
     return () => {
       isMounted.current = false;
 
-      socketsMap.forEach((_, key) => {
+      playersMap.forEach((_, key) => {
         const parts = key.split('_');
         const cameraId = Number(parts[1]);
         const isCopilot = parts[0] === 'copilot';
@@ -162,8 +148,9 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
         cleanupSocket(key, cameraId, isCopilot);
       });
 
-      socketsMap.clear();
+      playersMap.clear();
       canvasMap.clear();
+      frameCallbacks.current.clear();
     };
   }, [startConnection]);
 
@@ -174,8 +161,7 @@ export const VideoStreamProvider = ({ children }: VideoStreamProviderProps) => {
       callback: ((canvas: HTMLCanvasElement) => void) | null,
     ) => {
       const key = `${isCopilot ? 'copilot' : 'detection'}_${cameraId}`;
-      if (callback) frameCallbacks.current.set(key, callback);
-      else frameCallbacks.current.delete(key);
+      frameCallbacks.current.set(key, callback);
     },
     [],
   );
