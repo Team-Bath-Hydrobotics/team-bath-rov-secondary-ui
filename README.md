@@ -39,6 +39,18 @@ npm run dev
 
 The dev server starts at `http://localhost:5173`.
 
+### Running Tests
+```
+# run all tests and report pass/fail
+npm run test
+
+# run all test and generates coverage files with HTML report (for use before PR's)
+rpm run test:coverage
+
+#run tests automatically when a file is changed and saved
+rpm run test:watch
+```
+
 ### Connecting to the photogrammetry backend
 
 You will need to add a .env file at the repo root with the following `VITE_PHOTOGRAMMETRY_API_URL=http://localhost:8100` or equivalent otherwise the default url of `http://localhost:8100` will be used.
