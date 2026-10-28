@@ -5,7 +5,7 @@ export const SESSION_CONFIG_TOPIC = 'session/config';
 
 const host = import.meta.env.VITE_MQTT_HOST;
 const port = import.meta.env.VITE_MQTT_PORT;
-const brokerUrl = `wss://${host}:${port}/mqtt`;
+const brokerUrl = import.meta.env.VITE_MQTT_URL || `wss://${host}:${port}/mqtt`;
 
 export const mqttClient = mqtt.connect(brokerUrl, {
   username: import.meta.env.VITE_MQTT_USERNAME,
