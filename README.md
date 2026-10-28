@@ -119,6 +119,28 @@ VITE_MQTT_USERNAME=<Find in teams>
 VITE_MQTT_PASSWORD=<Find in teams>
 ```
 
+For a local broker, you can instead set its full WebSocket URL in `.env.local`:
+
+```dotenv
+VITE_MQTT_URL=ws://127.0.0.1:9001/mqtt
+```
+
+The broker must already be running with a WebSocket listener at that address.
+`VITE_MQTT_URL` takes precedence over `VITE_MQTT_HOST` and `VITE_MQTT_PORT`.
+When it is unset or empty, the UI uses `wss://<host>:<port>/mqtt` as before.
+Username and password settings apply to either URL. Restart the dev server after
+changing environment variables. The MQTT status indicator displays the
+connection state reported by the MQTT provider.
+
+### Local simulated cameras
+
+For two generated 640×480 camera feeds at 30 fps, follow the software repository's
+[local video preset guide](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/config/local-video).
+Start the simulator and video processor with that preset, open
+`http://localhost:5173/copilot`, and enable **Front Camera** and **Back Camera**.
+Use the default WebSocket base URL `ws://localhost:50000` in the UI's network
+settings. Video playback works independently of MQTT.
+
 # Folder Structure
 ```
 ui/
