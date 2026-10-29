@@ -3,14 +3,9 @@ import type { SessionConfig, TelemetryPayload } from '../types';
 
 export const SESSION_CONFIG_TOPIC = 'session/config';
 
-const host = import.meta.env.VITE_MQTT_HOST;
-const port = import.meta.env.VITE_MQTT_PORT;
-const brokerUrl = import.meta.env.VITE_MQTT_URL || `wss://${host}:${port}/mqtt`;
+const brokerUrl = import.meta.env.VITE_MQTT_URL;
 
-export const mqttClient = mqtt.connect(brokerUrl, {
-  username: import.meta.env.VITE_MQTT_USERNAME,
-  password: import.meta.env.VITE_MQTT_PASSWORD,
-});
+export const mqttClient = mqtt.connect(brokerUrl);
 
 // Minimal type checking for telemetry payload
 function isValidTelemetryField(
