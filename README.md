@@ -111,25 +111,19 @@ The Vite dev server proxies all `/detection-api*` requests to the target env url
 
 ### MQTT telemetry
 
-To connect to the telemetry broker add the following in an `.env` file at the project root:
-```
-VITE_MQTT_HOST=<WS host name>
-VITE_MQTT_PORT=<Web socket port number>
-VITE_MQTT_USERNAME=<Find in teams>
-VITE_MQTT_PASSWORD=<Find in teams>
-```
-
-For a local broker, you can instead set its full WebSocket URL in `.env.local`:
+Set `VITE_MQTT_URL` to the telemetry broker's full WebSocket URL in an `.env.local`
+file at the project root. For a local broker:
 
 ```dotenv
 VITE_MQTT_URL=ws://127.0.0.1:9001/mqtt
 ```
 
 The broker must already be running with a WebSocket listener at that address.
-`VITE_MQTT_URL` takes precedence over `VITE_MQTT_HOST` and `VITE_MQTT_PORT`.
-When it is unset or empty, the UI uses `wss://<host>:<port>/mqtt` as before.
-Username and password settings apply to either URL. Restart the dev server after
-changing environment variables. The MQTT status indicator displays the
+`VITE_MQTT_URL` is the only setting used to configure the broker address and must
+be provided. Use `ws://` for an unencrypted WebSocket listener or `wss://` for a
+TLS listener, including its port and path (for example, `/mqtt`).
+Restart the dev server after changing environment variables.
+The MQTT status indicator displays the
 connection state reported by the MQTT provider.
 
 ### Local simulated cameras
