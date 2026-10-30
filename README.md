@@ -1,6 +1,6 @@
 # Secondary UI
 
-This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2026 entry.
+This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2027 entry.
 
 The backend services live in a separate repo: [`team-bath-rov-software`](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software).
 
