@@ -1,13 +1,13 @@
 # Secondary UI
 
-This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2026 entry.
+This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2027 entry.
 
 The backend services live in a separate repo: [`team-bath-rov-software`](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software).
 
 ### Tech stack
 - React + TypeScript
 - Vite for composing the project [https://vite.dev/]
-- MUI for stanard components [https://mui.com/]
+- MUI for standard components [https://mui.com/]
 
 
 ## Local Development
@@ -28,8 +28,6 @@ node -v
 
 ### Running the project locally
 ```
-cd ui
-
 # install dependencies
 npm install
 
@@ -44,14 +42,16 @@ The dev server starts at `http://localhost:5173`.
 # run all tests and report pass/fail
 npm run test
 
-# run all test and generates coverage files with HTML report (for use before PR's)
-rpm run test:coverage
+# run all tests and generates coverage files with HTML report (for use before PR's)
+npm run test:coverage
 
 #run tests automatically when a file is changed and saved
-rpm run test:watch
+npm run test:watch
 ```
 
 ### Connecting to the photogrammetry backend
+
+> Photogrammetry does not need to be installed for the 2027 competition, as it is not a 2027 requirement.
 
 You will need to add a .env file at the repo root with the following `VITE_PHOTOGRAMMETRY_API_URL=http://localhost:8100` or equivalent otherwise the default url of `http://localhost:8100` will be used.
 The Vite dev server proxies all `/photogrammetry-api*` requests to the target env url or defaults to `http://localhost:8100` via vite.config.ts, where the [photogrammetry backend](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/photogrammetry-backend) runs. To use backend features locally, start both servers:
@@ -65,7 +65,7 @@ The Vite dev server proxies all `/photogrammetry-api*` requests to the target en
 
 2. **Terminal 2** — UI:
     ```bash
-    cd team-bath-rov-secondary-ui/ui
+    cd team-bath-rov-secondary-ui
     npm install
     npm run dev
     ```
@@ -94,7 +94,7 @@ The Vite dev server proxies all `/detection-api*` requests to the target env url
 
 2. **Terminal 2** — UI:
     ```bash
-    cd team-bath-rov-secondary-ui/ui
+    cd team-bath-rov-secondary-ui
     npm install
     npm run dev
     ```
@@ -134,27 +134,6 @@ Start the simulator and video processor with that preset, open
 `http://localhost:5173/copilot`, and enable **Front Camera** and **Back Camera**.
 Use the default WebSocket base URL `ws://localhost:50000` in the UI's network
 settings. Video playback works independently of MQTT.
-
-# Folder Structure
-```
-ui/
-├─  api/
-├─  app/
-├─  assets/
-├─ components/
-├─ context/
-├─ hooks/
-├─ layouts/
-├─ pages/
-├─ providers/
-├─ reducers/
-├─ theme/
-├─ types/
-├─ utils/
-```
-Most folders expose an index.ts to support clean, centralized imports.
-
-You can group similar items in a single folder and rexport them in a single index.ts for things that don't need an entire folder
 
 # Architectural Responsibilities
 
