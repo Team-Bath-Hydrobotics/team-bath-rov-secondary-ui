@@ -33,7 +33,7 @@ jobs:
         run: npm run lint
 
       - name: Run Husky
-        run: npm husky
+        run: npx husky
         
       - name: Run tests
         run: npm test
