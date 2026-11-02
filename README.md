@@ -7,7 +7,7 @@ The backend services live in a separate repo: [`team-bath-rov-software`](https:/
 ### Tech stack
 - React + TypeScript
 - Vite for composing the project [https://vite.dev/]
-- MUI for stanard components [https://mui.com/]
+- MUI for standard components [https://mui.com/]
 
 
 ## Local Development
@@ -42,7 +42,7 @@ The dev server starts at `http://localhost:5173`.
 # run all tests and report pass/fail
 npm run test
 
-# run all test and generates coverage files with HTML report (for use before PR's)
+# run all tests and generates coverage files with HTML report (for use before PR's)
 npm run test:coverage
 
 #run tests automatically when a file is changed and saved
@@ -111,13 +111,29 @@ The Vite dev server proxies all `/detection-api*` requests to the target env url
 
 ### MQTT telemetry
 
-To connect to the telemetry broker add the following in an `.env` file at the project root:
+Set `VITE_MQTT_URL` to the telemetry broker's full WebSocket URL in an `.env.local`
+file at the project root. For a local broker:
+
+```dotenv
+VITE_MQTT_URL=ws://127.0.0.1:9001/mqtt
 ```
-VITE_MQTT_HOST=<WS host name>
-VITE_MQTT_PORT=<Web socket port number>
-VITE_MQTT_USERNAME=<Find in teams>
-VITE_MQTT_PASSWORD=<Find in teams>
-```
+
+The broker must already be running with a WebSocket listener at that address.
+`VITE_MQTT_URL` is the only setting used to configure the broker address and must
+be provided. Use `ws://` for an unencrypted WebSocket listener or `wss://` for a
+TLS listener, including its port and path (for example, `/mqtt`).
+Restart the dev server after changing environment variables.
+The MQTT status indicator displays the
+connection state reported by the MQTT provider.
+
+### Local simulated cameras
+
+For two generated 640×480 camera feeds at 30 fps, follow the software repository's
+[local video preset guide](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/config/local-video).
+Start the simulator and video processor with that preset, open
+`http://localhost:5173/copilot`, and enable **Front Camera** and **Back Camera**.
+Use the default WebSocket base URL `ws://localhost:50000` in the UI's network
+settings. Video playback works independently of MQTT.
 
 # Architectural Responsibilities
 
