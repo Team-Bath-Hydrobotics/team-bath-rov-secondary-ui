@@ -391,7 +391,7 @@ test('ignores a status update for an unknown camera ', () => {
   expect(result).toBe(state);
 });
 
-//telemetry data tests //
+// telemetry data tests //
 
 // a partial update only changes the fields it includes
 test('merges a partial telemetry update ', () => {
