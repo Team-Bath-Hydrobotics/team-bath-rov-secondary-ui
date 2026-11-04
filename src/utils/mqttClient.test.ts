@@ -22,21 +22,15 @@ describe('mqttClient connection', () => {
     vi.unstubAllEnvs();
   });
 
-  it('connects to the broker over secure websockets using env config', async () => {
-    vi.stubEnv('VITE_MQTT_HOST', 'broker.example.com');
-    vi.stubEnv('VITE_MQTT_PORT', '8884');
-    vi.stubEnv('VITE_MQTT_USERNAME', 'test-user');
-    vi.stubEnv('VITE_MQTT_PASSWORD', 'test-pass');
+  it('connects to the broker using the URL from env config', async () => {
+    vi.stubEnv('VITE_MQTT_URL', 'wss://broker.example.com:8884/mqtt');
     vi.resetModules();
     connectMock.mockClear();
 
     const mod = await import('./mqttClient');
 
     expect(connectMock).toHaveBeenCalledTimes(1);
-    expect(connectMock).toHaveBeenCalledWith('wss://broker.example.com:8884/mqtt', {
-      username: 'test-user',
-      password: 'test-pass',
-    });
+    expect(connectMock).toHaveBeenCalledWith('wss://broker.example.com:8884/mqtt');
     expect(mod.mqttClient).toBe(connectMock.mock.results[0].value);
   });
 });
