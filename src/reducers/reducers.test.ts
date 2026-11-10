@@ -178,6 +178,18 @@ test('ignores toggling an unknown camera ', () => {
   expect(result).toBe(state);
 });
 
+// unknown copilot cameraIDs return the same state object
+test('ignores toggling an unknown copilot camera ', () => {
+  const state: AppState = createState();
+
+  const result = AppStateReducer(state, {
+    type: 'TOGGLE_CAMERA',
+    cameraId: 2, // doesnt exist in the defined app state above
+    isCopilot: true,
+  });
+  expect(result).toBe(state);
+});
+
 // telemetry selection tests //
 
 // selecting an unselected field adds it to the list
