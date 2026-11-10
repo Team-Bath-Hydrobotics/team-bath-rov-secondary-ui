@@ -45,10 +45,10 @@ The dev server starts at `http://localhost:5173`.
 npm run test
 
 # run all test and generates coverage files with HTML report (for use before PR's)
-rpm run test:coverage
+npm run test:coverage
 
 #run tests automatically when a file is changed and saved
-rpm run test:watch
+npm run test:watch
 ```
 
 ### Connecting to the photogrammetry backend
