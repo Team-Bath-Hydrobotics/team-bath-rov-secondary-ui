@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import { Hurricane } from '../pages/Hurricane';
 import { MainLayout } from '../layouts/MainLayout';
 import { Telemetry } from '../pages/Telemetry';
 import { Detection } from '../pages/Detection';
@@ -20,6 +21,7 @@ function App() {
           <Route path="copilot" element={<CoPilot />} />
           <Route path="telemetry" element={<Telemetry />} />
           <Route path="detection" element={<Detection />} />
+          <Route path="hurricane" element={<Hurricane />} />
           <Route path="edna" element={<EDna />} />
           <Route path="iceberg-threat" element={<IcebergThreat />} />
           <Route path="photogrammetry" element={<Photogrammetry />} />
