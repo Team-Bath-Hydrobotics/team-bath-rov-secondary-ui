@@ -1,13 +1,13 @@
 # Secondary UI
 
-This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2026 entry.
+This project allows users to connect to live and historic telemetry/video and perform various competition related functions e.g. (iceberg threat, crab detection). Part of the [Team Bath Hydrobotics](https://github.com/Team-Bath-Hydrobotics) MATE ROV 2027 entry.
 
 The backend services live in a separate repo: [`team-bath-rov-software`](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software).
 
 ### Tech stack
 - React + TypeScript
 - Vite for composing the project [https://vite.dev/]
-- MUI for stanard components [https://mui.com/]
+- MUI for standard components [https://mui.com/]
 
 
 ## Local Development
@@ -28,8 +28,6 @@ node -v
 
 ### Running the project locally
 ```
-cd ui
-
 # install dependencies
 npm install
 
@@ -44,7 +42,7 @@ The dev server starts at `http://localhost:5173`.
 # run all tests and report pass/fail
 npm run test
 
-# run all test and generates coverage files with HTML report (for use before PR's)
+# run all tests and generates coverage files with HTML report (for use before PR's)
 npm run test:coverage
 
 #run tests automatically when a file is changed and saved
@@ -52,6 +50,8 @@ npm run test:watch
 ```
 
 ### Connecting to the photogrammetry backend
+
+> Photogrammetry does not need to be installed for the 2027 competition, as it is not a 2027 requirement.
 
 You will need to add a .env file at the repo root with the following `VITE_PHOTOGRAMMETRY_API_URL=http://localhost:8100` or equivalent otherwise the default url of `http://localhost:8100` will be used.
 The Vite dev server proxies all `/photogrammetry-api*` requests to the target env url or defaults to `http://localhost:8100` via vite.config.ts, where the [photogrammetry backend](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/photogrammetry-backend) runs. To use backend features locally, start both servers:
@@ -65,7 +65,7 @@ The Vite dev server proxies all `/photogrammetry-api*` requests to the target en
 
 2. **Terminal 2** — UI:
     ```bash
-    cd team-bath-rov-secondary-ui/ui
+    cd team-bath-rov-secondary-ui
     npm install
     npm run dev
     ```
@@ -94,7 +94,7 @@ The Vite dev server proxies all `/detection-api*` requests to the target env url
 
 2. **Terminal 2** — UI:
     ```bash
-    cd team-bath-rov-secondary-ui/ui
+    cd team-bath-rov-secondary-ui
     npm install
     npm run dev
     ```
@@ -111,34 +111,29 @@ The Vite dev server proxies all `/detection-api*` requests to the target env url
 
 ### MQTT telemetry
 
-To connect to the telemetry broker add the following in an `.env` file at the project root:
-```
-VITE_MQTT_HOST=<WS host name>
-VITE_MQTT_PORT=<Web socket port number>
-VITE_MQTT_USERNAME=<Find in teams>
-VITE_MQTT_PASSWORD=<Find in teams>
+Set `VITE_MQTT_URL` to the telemetry broker's full WebSocket URL in an `.env.local`
+file at the project root. For a local broker:
+
+```dotenv
+VITE_MQTT_URL=ws://127.0.0.1:9001/mqtt
 ```
 
-# Folder Structure
-```
-ui/
-├─  api/
-├─  app/
-├─  assets/
-├─ components/
-├─ context/
-├─ hooks/
-├─ layouts/
-├─ pages/
-├─ providers/
-├─ reducers/
-├─ theme/
-├─ types/
-├─ utils/
-```
-Most folders expose an index.ts to support clean, centralized imports.
+The broker must already be running with a WebSocket listener at that address.
+`VITE_MQTT_URL` is the only setting used to configure the broker address and must
+be provided. Use `ws://` for an unencrypted WebSocket listener or `wss://` for a
+TLS listener, including its port and path (for example, `/mqtt`).
+Restart the dev server after changing environment variables.
+The MQTT status indicator displays the
+connection state reported by the MQTT provider.
 
-You can group similar items in a single folder and rexport them in a single index.ts for things that don't need an entire folder
+### Local simulated cameras
+
+For two generated 640×480 camera feeds at 30 fps, follow the software repository's
+[local video preset guide](https://github.com/Team-Bath-Hydrobotics/team-bath-rov-software/tree/main/config/local-video).
+Start the simulator and video processor with that preset, open
+`http://localhost:5173/copilot`, and enable **Front Camera** and **Back Camera**.
+Use the default WebSocket base URL `ws://localhost:50000` in the UI's network
+settings. Video playback works independently of MQTT.
 
 # Architectural Responsibilities
 

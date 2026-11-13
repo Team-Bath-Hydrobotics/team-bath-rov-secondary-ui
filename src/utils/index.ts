@@ -1,2 +1,2 @@
-// Any global functions can be added in this folder and exported here
-export { calculateIcebergThreats, haversineDistanceNm } from './icebergCalculator';
+// Shared utilities are imported from their individual modules.
+export {};

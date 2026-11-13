@@ -9,6 +9,11 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
+        '/hurricane-api': {
+          target: env.HURRICANE_BACKEND_URL ?? 'http://127.0.0.1:8200',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/hurricane-api/, ''),
+        },
         '/detection-api': {
           target: env.VITE_DETECTION_API_URL ?? 'http://localhost:8000',
           changeOrigin: true,

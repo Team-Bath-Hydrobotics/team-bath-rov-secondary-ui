@@ -1,6 +1,7 @@
 import { Box, List, ListItemButton, ListItemText } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import CycloneIcon from '@mui/icons-material/Cyclone';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import BiotechIcon from '@mui/icons-material/Biotech';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
@@ -20,6 +21,7 @@ export function VerticalNav({ collapsed }: VerticalNavProps) {
     { key: 'copilot', label: 'CoPilot', icon: 'pilot' },
     { key: 'telemetry', label: 'Telemetry', icon: 'telemetry' },
     { key: 'detection', label: 'Crab Detection', icon: 'detection' },
+    { key: 'hurricane', label: 'Hurricane', icon: 'hurricane' },
     { key: 'edna', label: 'EDna', icon: 'edna' },
     { key: 'iceberg-threat', label: 'Iceberg Threat', icon: 'iceberg-threat' },
     { key: 'photogrammetry', label: 'Photogrammetry', icon: 'photogrammetry' },
@@ -30,6 +32,7 @@ export function VerticalNav({ collapsed }: VerticalNavProps) {
     pilot: <SportsEsportsIcon />,
     telemetry: <TrendingUpIcon />,
     detection: <VisibilityIcon />,
+    hurricane: <CycloneIcon />,
     edna: <BiotechIcon />,
     'iceberg-threat': <AcUnitIcon />,
     photogrammetry: <CameraAltIcon />,
