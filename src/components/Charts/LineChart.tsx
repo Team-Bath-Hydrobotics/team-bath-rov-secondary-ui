@@ -36,12 +36,15 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
     }, [initialData]);
 
     const dataRef = useRef<(number | null)[][]>(normalizedInitialData);
+    // x value of the first point received; x ticks are shown as seconds since this
+    const startXRef = useRef<number | null>(normalizedInitialData[0]?.[0] ?? null);
 
     /**
      * Reactive render state
      */
     const [hasData, setHasData] = useState(normalizedInitialData[0]?.length > 0);
     const LABEL_HIDE_THRESHOLD = 400;
+    const TICK_COUNT = 5; // fixed number of ticks per axis (4 intervals)
     /**
      * Observe container size
      */
@@ -74,6 +77,28 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
       const gridColor = theme.palette.divider;
       const showLabels = dimensions.width >= LABEL_HIDE_THRESHOLD;
 
+      // Evenly spaced ticks across the current range, so the tick count never changes
+      const evenSplits = (_u: uPlot, _axisIdx: number, min: number, max: number) =>
+        min == null || max == null
+          ? []
+          : Array.from(
+              { length: TICK_COUNT },
+              (_, i) => min + ((max - min) * i) / (TICK_COUNT - 1),
+            );
+
+      // Seconds since the first point received, e.g. 0.0 -> 20.0
+      const elapsedValues = (_u: uPlot, splits: number[]) =>
+        splits.map((v) => (v - (startXRef.current ?? v)).toFixed(1));
+
+      // y limits hug the data (10% padding) so they move with the points
+      const followRange = (_u: uPlot, min: number, max: number): uPlot.Range.MinMax => {
+        if (min == null || max == null) return [0, 1];
+        const pad = (max - min) * 0.1 || Math.abs(max) * 0.1 || 1;
+        return [min - pad, max + pad];
+      };
+
+      const oneDecimalValues = (_u: uPlot, splits: number[]) => splits.map((v) => v.toFixed(1));
+
       const seriesConfig: uPlot.Series[] = [
         {},
         ...labels.slice(1).map((label, i) => ({
@@ -91,33 +116,27 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
           legend: { show: !isLive && hasData },
           cursor: { show: !isLive && hasData },
           scales: {
-            x: { time: hasData },
-            y: { auto: true },
+            x: { time: false },
+            y: { auto: true, range: followRange },
           },
           axes: [
             {
-              label: showLabels
-                ? units[0]
-                  ? `${labels[0] ?? 'X'} (${units[0]})`
-                  : (labels[0] ?? 'X')
-                : '', // hide x-axis label
+              label: units[0] ? `${labels[0] ?? 'X'} (${units[0]})` : (labels[0] ?? 'X'),
               labelSize: 12,
               stroke: textColor,
               labelFont: '10px Arial',
-              values: showLabels ? undefined : () => [],
+              splits: evenSplits,
+              values: elapsedValues,
               ticks: { stroke: textColor },
               grid: { show: true, stroke: gridColor },
             },
             {
-              label: showLabels
-                ? units[1]
-                  ? `${labels[1] ?? 'Y'} (${units[1]})`
-                  : (labels[1] ?? 'Y')
-                : '',
+              label: units[1] ? `${labels[1] ?? 'Y'} (${units[1]})` : (labels[1] ?? 'Y'),
               labelSize: 12,
               stroke: textColor,
               labelFont: '10px Arial',
-              values: showLabels ? undefined : () => [],
+              splits: evenSplits,
+              values: oneDecimalValues,
               ticks: { stroke: textColor },
               grid: { show: true, stroke: gridColor },
             },
@@ -143,6 +162,7 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
         const WINDOW_SECONDS = 10;
         const data = dataRef.current;
 
+        if (startXRef.current === null) startXRef.current = newX;
         data[0].push(newX);
 
         newYs.forEach((y, i) => {
@@ -167,6 +187,7 @@ export const LineChart = forwardRef<LineChartHandle, LineChartProps>(
         const chart = uplotRef.current;
         if (!chart) return;
 
+        startXRef.current = newXs[0] ?? null;
         const alignedData: (number | null)[][] = [newXs, ...newYs];
 
         dataRef.current = alignedData.map((series) => series.map((v) => v ?? null));
