@@ -6,6 +6,8 @@ import { useAppStateContext } from '../context/AppStateContext';
 import type { TelemetryPayload } from '../types';
 import { isValidTelemetry } from '../utils/mqttClient';
 
+const TELEMETRY_TOPIC = 'hydrobotics/rov/<rov_id>/telemetry';
+
 interface MqttProviderProps {
   children: ReactNode;
 }
@@ -25,7 +27,13 @@ export const MqttProvider = ({ children }: MqttProviderProps) => {
   useEffect(() => {
     // Send a telemetry update at most once per animation frame
     const handleMessage = (_: string, payload: Uint8Array) => {
-      const parsedData = JSON.parse(payload.toString()) as TelemetryPayload;
+      let parsedData: TelemetryPayload;
+      try {
+        parsedData = JSON.parse(payload.toString()) as TelemetryPayload;
+      } catch (error) {
+        console.warn('[MqttProvider] Received non-JSON telemetry payload:', error);
+        return;
+      }
       // Skip malformed packets
       if (!isValidTelemetry(parsedData)) {
         console.warn('[MqttProvider] Received invalid telemetry payload:', parsedData);
@@ -46,18 +54,23 @@ export const MqttProvider = ({ children }: MqttProviderProps) => {
 
     const handleConnect = () => setConnected(true);
     const handleClose = () => setConnected(false);
+    const handleError = (error: Error) => {
+      console.error('[MqttProvider] MQTT error:', error);
+    };
 
-    mqttClient.subscribe('hydrobotics/rov/<rov_id>/telemetry');
+    mqttClient.subscribe(TELEMETRY_TOPIC);
 
     mqttClient.on('message', handleMessage);
     mqttClient.on('connect', handleConnect);
     mqttClient.on('close', handleClose);
+    mqttClient.on('error', handleError);
 
     return () => {
       mqttClient.off('message', handleMessage);
       mqttClient.off('connect', handleConnect);
       mqttClient.off('close', handleClose);
-      mqttClient.unsubscribe('rov/telemetry');
+      mqttClient.off('error', handleError);
+      mqttClient.unsubscribe(TELEMETRY_TOPIC);
     };
   }, [updateTelemetry]);
 
